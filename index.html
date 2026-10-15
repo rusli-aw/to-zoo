@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>To-Zoo — an animal rescue for your to-do list</title>
+<meta name="description" content="A to-do list that lives in a small 3D animal rescue. Every unfinished task is an animal in your care; finish the task and the animal goes home.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f8f3e8">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..700,0..100,0..1&family=Outfit:wght@300..700&display=swap">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/components.css">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F418;</text></svg>">
+
+<!-- One vendored file, resolved natively. No bundler, no install step. -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js"
+  }
+}
+</script>
+
+<!-- ══ watchdog ══════════════════════════════════════════════
+     A classic script, deliberately not a module, and deliberately
+     first. If the module graph fails to load at all — a bad path,
+     a stopped server, or the page opened over file:// where ES
+     modules are blocked outright — then main.js never runs, its
+     catch never fires, and the loading screen would otherwise spin
+     for ever with nothing to explain itself.
+
+     This cannot import anything and has no dependencies, so it
+     survives every one of those failures and tells the user which
+     one they hit. -->
+<script>
+(function () {
+  var problems = [];
+  window.addEventListener('error', function (e) {
+    problems.push(e.message || String(e.error || 'Script error'));
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) {
+    problems.push(String((e.reason && e.reason.message) || e.reason));
+  });
+
+  var RUN = 'python serve.py';
+
+  // Ask the server whether it is still there, so the message can tell the
+  // difference between "server stopped" and "a script threw".
+  window.__toZooDiagnose = function () {
+    if (location.protocol === 'file:') {
+      return Promise.resolve({
+        title: 'To-Zoo needs a web server',
+        body: 'This page was opened straight from the file system. Browsers block '
+            + 'JavaScript modules over file://, so the zoo cannot load.',
+        fix: RUN,
+        hint: 'Run that inside the to-zoo folder, then open http://localhost:5700'
+      });
+    }
+
+    return fetch('js/main.js', { cache: 'no-store' }).then(function (res) {
+      if (res.ok) {
+        return {
+          title: 'The zoo did not finish loading',
+          body: problems.length
+            ? 'The files loaded, but a script failed: ' + problems[0]
+            : 'The files loaded, but the app never started.',
+          fix: 'Reload the page',
+          hint: 'If it keeps happening, the browser console will have the details.'
+        };
+      }
+      return {
+        title: 'Some app files are missing',
+        body: 'The server answered with ' + res.status + ' for js/main.js.',
+        fix: RUN,
+        hint: 'Check the server is running from inside the to-zoo folder.'
+      };
+    }).catch(function () {
+      return {
+        title: 'The local server is not responding',
+        body: 'The page loaded earlier, but the server has since stopped, so the '
+            + 'rest of the app could not be fetched.',
+        fix: RUN,
+        hint: 'Start it again, then reload this page.'
+      };
+    });
+  };
+
+  // Long enough that a slow first paint is never mistaken for a failure.
+  setTimeout(function () {
+    if (window.__toZooBooted) return;
+    window.__toZooDiagnose().then(showFailure);
+  }, 8000);
+
+  function showFailure(d) {
+    if (window.__toZooBooted) return;
+    var loader = document.getElementById('loader');
+    if (loader) loader.parentNode.removeChild(loader);
+    var root = document.getElementById('modal-root') || document.body;
+    var box = document.createElement('div');
+    box.className = 'fallback-card';
+    box.setAttribute('role', 'alert');
+    box.innerHTML = '<h2></h2><p></p><pre class="fallback-card__cmd"></pre>'
+                  + '<p class="fallback-card__hint"></p>';
+    box.querySelector('h2').textContent = d.title;
+    box.querySelector('p').textContent = d.body;
+    box.querySelector('pre').textContent = d.fix;
+    box.querySelector('.fallback-card__hint').textContent = d.hint;
+    root.appendChild(box);
+  }
+})();
+</script>
+</head>
+<body>
+
+<!-- ══ loading ═══════════════════════════════════════════════
+     An elephant drawn one stroke at a time. It is the first
+     promise the product makes about how it will look. -->
+<div class="loader" id="loader" role="status" aria-live="polite">
+  <div class="loader__art">
+    <svg viewBox="0 0 220 170" fill="none" aria-hidden="true">
+      <g stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+        <path class="sketch" style="--i:0" d="M52 128c-4 8-3 20 5 22 7 2 12-5 12-13"/>
+        <path class="sketch" style="--i:1" d="M84 133c-3 8-2 18 5 20 7 1 11-6 11-14"/>
+        <path class="sketch" style="--i:2" d="M136 130c-3 8-2 19 5 21 7 2 12-5 12-13"/>
+        <path class="sketch" style="--i:3" d="M164 124c-3 8-1 18 6 20 7 1 11-6 10-14"/>
+        <path class="sketch" style="--i:4" d="M44 96c2-27 22-46 56-48 38-2 62 14 68 40 5 22-2 38-14 40"/>
+        <path class="sketch" style="--i:5" d="M44 96c-1 18 6 32 20 36 22 6 60 6 82-2 12-4 20-12 22-22"/>
+        <path class="sketch" style="--i:6" d="M60 52c-14-8-28-6-32 6-4 13 6 28 22 32"/>
+        <path class="sketch" style="--i:7" d="M52 60c-8-4-16-2-18 5-2 8 4 16 13 19"/>
+        <path class="sketch" style="--i:8" d="M46 88c-8 4-14 14-13 28 1 16 10 26 20 24 9-2 12-14 8-26"/>
+        <path class="sketch" style="--i:9" d="M60 82c2 3 7 3 9 0"/>
+        <path class="sketch" style="--i:10" d="M168 108c8 2 14-2 16-8"/>
+      </g>
+    </svg>
+  </div>
+  <p class="loader__word">To-Zoo</p>
+  <p class="loader__sub" id="loader-sub">Opening the rescue…</p>
+</div>
+
+<!-- ══ the app ═══════════════════════════════════════════════ -->
+<div class="app" id="app" data-view="zoo" hidden>
+
+  <!-- The 3D world. Everything else floats over it. -->
+  <div class="stage" id="stage">
+    <canvas id="zoo-canvas"></canvas>
+
+    <!-- Keyboard and screen-reader access to the animals. Visually hidden,
+         but focusable and in reading order: one button per animal, so the
+         3D scene is operable without a pointer. -->
+    <div class="animal-proxies" id="animal-proxies" role="list"
+         aria-label="Animals in your zoo"></div>
+
+    <div class="hover-card" id="hover-card" hidden aria-hidden="true"></div>
+    <div class="release-skip" id="release-skip" hidden>
+      <button class="btn btn--ghost btn--sm" id="skip-release">Skip animation <kbd>Esc</kbd></button>
+    </div>
+  </div>
+
+  <!-- ── top left: identity and the one sentence that matters ── -->
+  <header class="hud hud--tl">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <!-- An elephant's head, three-quarter on: domed skull, one big ear,
+             a trunk curling down and forward, and a tusk. Drawn in the same
+             open stroke as the loading sketch so the mark and the app agree. -->
+        <svg viewBox="0 0 44 38" fill="none" stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 9c3-4 9-5.5 14-3.5s7.5 7 7 12c-.4 4-2 6.5-2 10"/>
+          <path d="M34 27.5c-.5 3-3 4.5-5.5 3.5"/>
+          <path d="M15 9C10 6 5 7.5 4 12c-1 4.5 1 9 5 11.5"/>
+          <path d="M9 23.5c1.5 3 4.5 4.5 7.5 4"/>
+          <path d="M16.5 27.5c.5 3.5.5 6 0 8"/>
+          <path d="M16.5 27.5c2.5-1 4-3 4-5.5"/>
+          <path d="M22 33.5c2 1 4 .5 5-1.5"/>
+          <circle cx="24.5" cy="13" r="1.4" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
+      <span class="brand__name">To-Zoo</span>
+    </div>
+    <p class="status-line" id="status-line" aria-live="polite">Your zoo is thriving</p>
+  </header>
+
+  <!-- ── top right: progress, wealth, self ── -->
+  <div class="hud hud--tr">
+    <div class="today" id="today" title="Tasks completed today">
+      <svg class="ring" viewBox="0 0 36 36" aria-hidden="true">
+        <circle class="ring__track" cx="18" cy="18" r="15.5"/>
+        <circle class="ring__fill" id="ring-fill" cx="18" cy="18" r="15.5"/>
+      </svg>
+      <div class="today__text">
+        <b id="today-count">0</b><span id="today-goal">/3</span>
+      </div>
+      <span class="today__label">today</span>
+    </div>
+
+    <button class="piggy" id="tokens" type="button"
+            aria-label="Piggy bank. Opens your inventory.">
+      <span class="piggy__art" aria-hidden="true">
+        <span class="piggy__fill" id="piggy-fill"></span>
+        <svg viewBox="0 0 48 40" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 10c-5 2-8 7-8 12 0 4 2 8 6 10v5h6v-3h8v3h6v-5c3-2 5-5 6-8h3v-8h-4c-1-2-3-4-5-5"/>
+          <path d="M14 10c1-4 5-6 9-6s7 2 8 5"/>
+          <path d="M20 9h9"/>
+          <circle cx="34" cy="19" r="1.4" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
+      <span class="piggy__value" id="token-value">0</span>
+    </button>
+
+    <button class="avatar-btn" id="avatar-btn" type="button" aria-label="Your profile">
+      <span class="avatar" id="avatar">🌿</span>
+      <span class="streak-pip" id="streak-pip" hidden></span>
+    </button>
+  </div>
+
+  <!-- ── bottom left: how the animals are feeling ──
+       Mood, not headcount. A zoo of thirty happy animals reads 100% here;
+       one forgotten sheep is what drags it down. -->
+  <div class="hud hud--bl">
+    <div class="health" id="health">
+      <div class="health__head">
+        <span class="health__word" id="health-word">Thriving</span>
+        <span class="health__pct" id="health-pct">100%</span>
+      </div>
+      <div class="health__bar"><i id="health-fill" style="width:100%"></i></div>
+      <div class="health__legend" id="health-legend"></div>
+      <button class="neglect" id="neglect" type="button" hidden>
+        <span class="neglect__emoji" id="neglect-emoji" aria-hidden="true">🐘</span>
+        <span class="neglect__text">
+          <span class="neglect__title" id="neglect-title"></span>
+          <span class="neglect__wait" id="neglect-wait"></span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── bottom right: the one action that must always be one click away ── -->
+  <div class="hud hud--br">
+    <button class="btn btn--primary btn--add" id="add-task" type="button">
+      <span aria-hidden="true">+</span> Add task
+      <kbd class="btn__kbd">N</kbd>
+    </button>
+  </div>
+
+  <!-- ── navigation ── -->
+  <nav class="nav" id="nav" aria-label="Sections">
+    <button class="nav__item is-active" data-view="zoo" type="button">
+      <span class="nav__icon" aria-hidden="true">🏞️</span><span class="nav__label">Zoo</span>
+    </button>
+    <button class="nav__item" data-view="tasks" type="button">
+      <span class="nav__icon" aria-hidden="true">📋</span><span class="nav__label">Tasks</span>
+      <span class="nav__badge" id="nav-badge" hidden></span>
+    </button>
+    <button class="nav__item" data-view="customize" type="button">
+      <span class="nav__icon" aria-hidden="true">🌻</span><span class="nav__label">Customize</span>
+    </button>
+    <button class="nav__item" data-view="friends" type="button">
+      <span class="nav__icon" aria-hidden="true">👋</span><span class="nav__label">Friends</span>
+    </button>
+    <button class="nav__item" data-view="profile" type="button">
+      <span class="nav__icon" aria-hidden="true">🌿</span><span class="nav__label">Profile</span>
+    </button>
+  </nav>
+
+  <!-- Secondary views slide over the zoo rather than replacing it. -->
+  <div class="sheet-root" id="sheet-root" hidden></div>
+
+  <!-- The empty state, shown over a deliberately quiet zoo. -->
+  <div class="empty" id="empty" hidden>
+    <h2 class="empty__title">The zoo is wonderfully quiet.</h2>
+    <p class="empty__body">Add your first task and take an animal into care.</p>
+    <button class="btn btn--primary" id="empty-add" type="button">+ Add your first task</button>
+  </div>
+
+</div>
+
+<div class="modal-root" id="modal-root"></div>
+<div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="false"></div>
+<div class="token-fly-root" id="token-fly-root" aria-hidden="true"></div>
+
+<!-- Shown only if the browser cannot give us WebGL at all. -->
+<noscript>
+  <div class="fallback">
+    <h1>To-Zoo</h1>
+    <p>To-Zoo needs JavaScript to run its zoo. The task list works without 3D, but not without scripting.</p>
+  </div>
+</noscript>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

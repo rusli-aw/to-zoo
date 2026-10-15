@@ -1,0 +1,235 @@
+/* ============================================================
+   To-Zoo — design tokens
+
+   Safari at golden hour, drawn by hand. Warm paper grounds,
+   earthy greens, sand and muted ochre. The only saturated
+   colour in the system is reserved for urgency, so when an
+   elephant goes overdue it becomes the loudest thing on screen.
+
+   The 3D world reads its colours from these same variables
+   (see js/zoo/palette.js). Only the interface tokens flip in
+   the dark block. World colours — grass, sand, animals — are
+   physical, and night in the zoo comes from the moon in
+   js/zoo/daylight.js. Darkening them here as well used to make
+   night dark twice over.
+
+   Theme is resolved once in JS and written to <html data-theme>,
+   so there is exactly one dark block to maintain and the
+   settings toggle and the OS preference use the same path.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* --- grounds: warm off-white paper --- */
+  --paper:        #f8f3e8;
+  --paper-sunk:   #efe6d5;
+  --surface:      #fffdf8;
+  --surface-2:    #f5eddd;
+  --surface-3:    #ece0ca;
+  --line:         #e3d7c1;
+  --line-strong:  #c9b797;
+
+  /* --- ink: warm near-black, never pure --- */
+  --ink:          #2f2a21;
+  --ink-muted:    #6d6152;
+  --ink-faint:    #94856f;
+  --ink-invert:   #fffdf8;
+  /* Outlines are drawn ink, not UI text: they stay dark in every theme.
+     Binding them to --ink turned every line in the zoo near-white at dusk. */
+  --outline:      #2b261e;
+  /* Woven white. Like --outline, it is a material colour rather than a UI
+     role, so it must not follow the theme — a white udeng that turned brown
+     after sunset would just look like a mistake. */
+  --cloth:        #f7f3e9;
+  --ivory:        #efe7d6;   /* tusks. Warm, and never a UI surface. */
+
+  /* --- the savanna --- */
+  --grass:        #8cae63;
+  --grass-deep:   #6c8d4f;
+  --grass-lush:   #9dc172;
+  --grass-dry:    #c2b77c;
+  --sand:         #e8d6b0;
+  --sand-deep:    #c4ab7f;
+  --earth:        #9c7a52;
+  --earth-deep:   #6b4f34;
+  --bark:         #7a5b3d;
+
+  /* --- sky and water --- */
+  --sky-high:     #9fd0ea;
+  --sky-low:      #e6f2ee;
+  --water:        #72b3c9;
+  --water-deep:   #5b8496;
+  /* The summer sea. Separate from --water, which the decorations use. */
+  --sea-shallow:  #4fd0c4;
+  --sea:          #1f93c4;
+  --sea-deep:     #155a96;
+  --foam:         #f4faf8;
+  /* The sky wash behind shop and card art. A UI role, so it flips. */
+  --art-sky:      var(--sky-low);
+
+  /* --- animal identity: the size hierarchy is a colour hierarchy too --- */
+  --elephant:     #8d8a94;
+  --elephant-bg:  #eae8ec;
+  --lion:         #c9964a;
+  --lion-bg:      #f7ebd6;
+  --rabbit:       #d9d2c8;
+  --rabbit-ear:   #c8a89c;
+  --rabbit-bg:    #f4efe6;
+
+  /* --- state --- */
+  --accent:       #b9702f;   /* tokens, primary action, the ochre thread */
+  --accent-soft:  #f7e6d2;
+  --accent-deep:  #94571f;
+  --on-accent:    #fffdf8;
+
+  --thrive:       #4f7a45;   /* healthy zoo, completed, streaks */
+  --thrive-soft:  #e3eddd;
+  --caution:      #9a7020;   /* due soon */
+  --caution-soft: #f9edd0;
+  --overdue:      #a8452e;   /* the only red in the system */
+  --overdue-soft: #f7ded5;
+
+  --focus:        #2f6ea8;
+
+  /* --- typography --- */
+  --font-display: "Fraunces", Georgia, "Iowan Old Style", Palatino, serif;
+  --font-body:    "Outfit", ui-sans-serif, system-ui, -apple-system,
+                  "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+
+  --step--2: clamp(.69rem, .67rem + .1vw, .75rem);
+  --step--1: clamp(.81rem, .78rem + .14vw, .89rem);
+  --step-0:  clamp(.94rem, .91rem + .17vw, 1.05rem);
+  --step-1:  clamp(1.13rem, 1.07rem + .28vw, 1.31rem);
+  --step-2:  clamp(1.35rem, 1.25rem + .46vw, 1.64rem);
+  --step-3:  clamp(1.62rem, 1.47rem + .72vw, 2.05rem);
+  --step-4:  clamp(1.94rem, 1.71rem + 1.1vw, 2.56rem);
+
+  /* --- space: 4px base, named by intent --- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* --- form: everything is rounded, nothing is a circle by accident --- */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius:    18px;
+  --radius-lg: 26px;
+  --radius-xl: 34px;
+  --radius-pill: 999px;
+
+  /* --- depth: soft and warm, never grey --- */
+  --shadow-xs:  0 1px 2px rgba(47, 42, 33, .05);
+  --shadow-sm:  0 1px 2px rgba(47, 42, 33, .05), 0 3px 8px rgba(47, 42, 33, .05);
+  --shadow:     0 1px 2px rgba(47, 42, 33, .04), 0 8px 24px rgba(47, 42, 33, .09);
+  --shadow-lg:  0 2px 4px rgba(47, 42, 33, .05), 0 20px 48px rgba(47, 42, 33, .14);
+  --shadow-pop: 0 12px 36px rgba(185, 112, 47, .28);
+
+  /* --- motion: sparing, and all of it answerable to one switch --- */
+  --ease-out:    cubic-bezier(.22, 1, .36, 1);
+  --ease-soft:   cubic-bezier(.4, 0, .2, 1);
+  --ease-bounce: cubic-bezier(.34, 1.56, .64, 1);
+  --dur-fast: 140ms;
+  --dur:      240ms;
+  --dur-slow: 420ms;
+
+  /* Read by JS as well as CSS. Anything that moves for delight
+     rather than for meaning multiplies its distance by this. */
+  --motion: 1;
+
+  --nav-h: 68px;
+}
+
+/* ---------- dusk ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper:        #231d18;
+  --paper-sunk:   #1a1511;
+  --surface:      #2d251f;
+  --surface-2:    #372e26;
+  --surface-3:    #43382e;
+  --line:         #47392e;
+  --line-strong:  #66543f;
+
+  --ink:          #f2e9db;
+  --ink-muted:    #b6a795;
+  --ink-faint:    #8d7f6d;
+  --ink-invert:   #191410;
+  --outline:      #120e0a;
+  --cloth:        #ece7db;
+  --ivory:        #ded4c0;
+
+  /* No savanna, sky, water or animal overrides here: the moon does night. */
+  --art-sky:      #2f3a44;
+
+  --elephant-bg:  #2b2830;
+  --lion-bg:      #33281a;
+  --rabbit-bg:    #2e2922;
+
+  --accent:       #d98c45;
+  --accent-soft:  #3a281a;
+  --accent-deep:  #f0a862;
+  --on-accent:    #191410;
+
+  --thrive:       #7aa96c;
+  --thrive-soft:  #24301f;
+  --caution:      #d4a84a;
+  --caution-soft: #332912;
+  --overdue:      #d4694e;
+  --overdue-soft: #3a2019;
+
+  --focus:        #7cb2e8;
+
+  --shadow-xs:  0 1px 2px rgba(0, 0, 0, .3);
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, .3), 0 3px 8px rgba(0, 0, 0, .25);
+  --shadow:     0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
+  --shadow-lg:  0 2px 4px rgba(0, 0, 0, .35), 0 20px 48px rgba(0, 0, 0, .5);
+  --shadow-pop: 0 12px 36px rgba(217, 140, 69, .3);
+}
+
+/* ---------- one switch for motion ----------
+   The media query covers the OS preference; the attribute covers
+   the in-app toggle. JS mirrors the resolved answer onto <html>
+   so the render loop can read it too. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) {
+    --motion: 0;
+    --dur-fast: 1ms;
+    --dur: 1ms;
+    --dur-slow: 1ms;
+  }
+}
+
+:root[data-motion="reduced"] {
+  --motion: 0;
+  --dur-fast: 1ms;
+  --dur: 1ms;
+  --dur-slow: 1ms;
+}
+
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) *,
+  :root:not([data-motion="full"]) *::before,
+  :root:not([data-motion="full"]) *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
