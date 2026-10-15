@@ -48,6 +48,7 @@ export function createAudio(zoo, hooks) {
   let breeze = null;
   let nextBird = 0;
   let nextCall = 0;
+  let nextCricket = 0;
 
   async function start() {
     if (ctx) return;
@@ -109,9 +110,9 @@ export function createAudio(zoo, hooks) {
     src.loop = true;
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 520;
+    filter.frequency.value = 360;   // warmer: more hush, less hiss
     const gain = ctx.createGain();
-    gain.gain.value = 0.05;
+    gain.gain.value = 0.045;
     // Slow gusts.
     const lfo = ctx.createOscillator();
     lfo.frequency.value = 0.07;
@@ -201,6 +202,73 @@ export function createAudio(zoo, hooks) {
     osc.stop(t + 0.6); vib.stop(t + 0.6);
   }
 
+  /**
+   * A footstep: a tiny filtered tap with a soft body under it. Alternate
+   * feet are pitched a little apart, which is what turns a tick into a
+   * "pit-pat". Size sets the voice: rabbits pit, lions pat, elephants thud.
+   */
+  const STEP = {
+    rabbit: { freq: 2600, body: 520, len: 0.035, level: 0.05 },
+    lion: { freq: 1500, body: 240, len: 0.05, level: 0.06 },
+    elephant: { freq: 700, body: 95, len: 0.09, level: 0.09 },
+  };
+  let stepNoise = null;
+  let stepBudget = 0;
+  function step(type, x, z, foot) {
+    const v = STEP[type] ?? STEP.lion;
+    stepNoise ??= noiseBuffer(0.2);
+    const out = at(x, 0.05, z);
+    const t = ctx.currentTime + 0.005;
+    const pitch = foot ? 1 : 1.18;
+
+    const src = ctx.createBufferSource();
+    src.buffer = stepNoise;
+    src.playbackRate.value = 1.6 + Math.random() * 0.3;
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = v.freq * pitch;
+    band.Q.value = 2.2;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(v.level, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + v.len);
+    src.connect(band).connect(g).connect(out);
+    src.start(t, Math.random() * 0.1);
+    src.stop(t + v.len + 0.02);
+
+    const body = ctx.createOscillator();
+    const bg = ctx.createGain();
+    body.type = 'sine';
+    body.frequency.setValueAtTime(v.body * pitch, t);
+    body.frequency.exponentialRampToValueAtTime(v.body * pitch * 0.6, t + v.len);
+    bg.gain.setValueAtTime(0.0001, t);
+    bg.gain.exponentialRampToValueAtTime(v.level * 0.7, t + 0.006);
+    bg.gain.exponentialRampToValueAtTime(0.0001, t + v.len * 1.2);
+    body.connect(bg).connect(out);
+    body.start(t);
+    body.stop(t + v.len * 1.3);
+  }
+
+  /** A cricket: three quick high pulses, somewhere out in the grass. */
+  function cricket(x, z) {
+    const out = at(x, 0.2, z);
+    const t0 = ctx.currentTime + 0.02;
+    const f = 4300 + Math.random() * 700;
+    for (let i = 0; i < 3; i += 1) {
+      const t = t0 + i * 0.055;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.012, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+      osc.connect(g).connect(out);
+      osc.start(t);
+      osc.stop(t + 0.05);
+    }
+  }
+
   /** A soft bell. */
   function bell(freq, when, out, level = 0.08) {
     const osc = ctx.createOscillator();
@@ -211,15 +279,16 @@ export function createAudio(zoo, hooks) {
     osc.frequency.value = freq;
     over.frequency.value = freq * 2.76;   // the inharmonic partial that says "bell"
     const og = ctx.createGain();
-    og.gain.value = 0.25;
+    og.gain.value = 0.12;
+    // A soft mallet: a gentler attack and a long tail.
     g.gain.setValueAtTime(0.0001, when);
-    g.gain.exponentialRampToValueAtTime(level, when + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.0001, when + 1.2);
+    g.gain.exponentialRampToValueAtTime(level, when + 0.025);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 1.8);
     osc.connect(g);
     over.connect(og).connect(g);
     g.connect(out);
     osc.start(when); over.start(when);
-    osc.stop(when + 1.3); over.stop(when + 1.3);
+    osc.stop(when + 1.9); over.stop(when + 1.9);
   }
 
   /* -------------------------------------------------------------- loop --- */
@@ -228,7 +297,14 @@ export function createAudio(zoo, hooks) {
     if (!enabled || !ctx) return;
     if (scene) scene.setListenerFromMatrix(zoo.camera.matrixWorld);
 
-    if (elapsed > nextBird) {
+    // Dusk and night: birds hand over to crickets.
+    const night = zoo.atmosphere.uNight.value;
+    if (night > 0.25 && elapsed > nextCricket) {
+      cricket((Math.random() - 0.5) * 30, -4 - Math.random() * 20);
+      nextCricket = elapsed + 0.35 + Math.random() * 1.1;
+    }
+
+    if (night < 0.4 && elapsed > nextBird) {
       const trees = hooks.treeSpots();
       if (trees.length) {
         const tree = trees[Math.floor(Math.random() * trees.length)];
@@ -263,6 +339,15 @@ export function createAudio(zoo, hooks) {
       }
     },
 
+    /** A footfall. Capped so a busy zoo patters rather than drums. */
+    step(type, x, z, foot) {
+      if (!enabled || !ctx) return;
+      const now = ctx.currentTime;
+      if (now < stepBudget) return;
+      stepBudget = now + 0.06;
+      step(type, x, z, foot);
+    },
+
     /** An animal's call, where it stands. */
     call(type, x, z) { if (enabled && ctx) call(type, x, z); },
 
@@ -271,14 +356,15 @@ export function createAudio(zoo, hooks) {
       if (!enabled || !ctx) return;
       const out = at(x, 1.5, z);
       const t = ctx.currentTime + 0.02;
-      [0, 2, 4, 5, 7].forEach((n, i) => bell(PENTA[n], t + i * 0.11, out, 0.07));
+      [0, 2, 4, 5, 7].forEach((n, i) => bell(PENTA[n] / 2, t + i * 0.16, out, 0.05));
     },
 
     /** Coins landing in the piggy bank: a couple of quick high plinks. */
     coins(count = 3) {
       if (!enabled || !ctx) return;
       const t = ctx.currentTime + 0.02;
-      for (let i = 0; i < Math.min(5, count); i += 1) bell(PENTA[5 + (i % 3)] * 2, t + i * 0.07, master, 0.035);
+      // Petals landing: a few soft notes, never a jingle.
+      for (let i = 0; i < Math.min(4, count); i += 1) bell(PENTA[3 + (i % 4)], t + i * 0.13, master, 0.022);
     },
 
     dispose() {

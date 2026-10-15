@@ -68,8 +68,10 @@ let ramp = null;
  */
 function toonRamp() {
   if (ramp) return ramp;
-  const v = [178, 208, 238, 255];
-  const steps = new Uint8Array(v.flatMap((x) => [x, x, x, 255]));
+  // Light from the sunset: the shade band leans mauve, the lit band peach.
+  // (The shader is patched below to read all three channels, not just red.)
+  const v = [[176, 156, 186], [208, 192, 204], [240, 226, 220], [255, 244, 228]];
+  const steps = new Uint8Array(v.flatMap(([r, g, b]) => [r, g, b, 255]));
   ramp = new THREE.DataTexture(steps, v.length, 1, THREE.RGBAFormat);
   ramp.minFilter = THREE.LinearFilter;
   ramp.magFilter = THREE.LinearFilter;
@@ -133,20 +135,45 @@ export class Ink {
       uTime: this.time,
       uWobble: { value: opts.wobble ?? this.baseWobble },
       uEnergy: { value: 1 },
+      uWind: { value: opts.wind ?? 0 },
+      uWindBase: { value: opts.windBase ?? 0.4 },
     };
+    const windy = (opts.wind ?? 0) > 0;
 
     material.onBeforeCompile = (shader) => {
       Object.assign(shader.uniforms, uniforms);
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <gradientmap_pars_fragment>',
+        THREE.ShaderChunk.gradientmap_pars_fragment.replace(
+          'return vec3( texture2D( gradientMap, coord ).r );',
+          'return texture2D( gradientMap, coord ).rgb;',
+        ),
+      );
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', `#include <common>\n${WOBBLE_GLSL}`)
+        .replace('#include <common>', `#include <common>\n${WOBBLE_GLSL}\nuniform float uWind;\nuniform float uWindBase;`)
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
-           transformed += normalize(objectNormal) * inkWobble(aSeed) * uWobble * uEnergy;`,
+           transformed += normalize(objectNormal) * inkWobble(aSeed) * uWobble * uEnergy;
+           ${windy ? `
+           // Wind: a slow gust plus a quicker flutter, phased by position so
+           // neighbouring trees never move in lockstep, and growing with
+           // height so roots stay planted while crowns sway.
+           {
+             vec3 wp = (modelMatrix * vec4(position, 1.0)).xyz;
+             float lift = max(position.y - uWindBase, 0.0);
+             float bend = pow(lift, 1.25);
+             float gust = sin(uTime * 0.9 + wp.x * 0.21 + wp.z * 0.13) * 0.5
+                        + sin(uTime * 2.3 + wp.x * 0.7 + wp.z * 0.5) * 0.2
+                        // the meadow wave (grass.js), so everything leans together
+                        + smoothstep(-0.3, 1.0, sin(uTime * 0.55 - wp.x * 0.32 - wp.z * 0.12)) * 0.6;
+             transformed.x += gust * uWind * bend;
+             transformed.z += cos(uTime * 0.7 + wp.z * 0.19) * uWind * 0.45 * bend;
+           }` : ''}`,
         );
     };
     // Materials with different shader source must not share a program.
-    material.customProgramCacheKey = () => 'toZooInkBody';
+    material.customProgramCacheKey = () => (windy ? 'toZooInkBodyWind' : 'toZooInkBody');
 
     material.userData.ink = uniforms;
     this.registry.push({ material, uniforms });

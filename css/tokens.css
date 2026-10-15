@@ -1,11 +1,13 @@
 /* ============================================================
    To-Zoo — design tokens
 
-   A storybook spread on cream parchment. The interface is quiet:
-   Inter on cream and liquid glass over the world, one near-black
-   pill for the serious action. The world is cozy rather than
-   loud — clear greens, a soft blue sky, no ink lines — so the
-   whole thing feels like a slow afternoon, not a party.
+   A painted dusk on cream paper. Walnut ink on vintage cream,
+   one rounded face (Nunito) in sentence case throughout.
+   Square corners, no shadows: structure is
+   1px saddle-brown lines and the shift from cream to bone.
+
+   The world is gouache: a peach-to-sage sky, layered mauve
+   hills, olive meadow, terracotta and sage accents.
 
    The 3D world reads its colours from these same variables
    (see js/zoo/palette.js). Only the interface tokens flip in
@@ -23,70 +25,70 @@
   color-scheme: light;
 
   /* --- grounds: cream parchment, defined by hairlines not shadows --- */
-  --paper:        #fbfaf9;   /* cream canvas */
-  --paper-sunk:   #f2f0ed;   /* stone surface */
-  --surface:      #ffffff;
-  --surface-2:    #f6f4ef;   /* sand */
-  --surface-3:    #f2f0ed;
-  --line:         #f2f0ed;
-  --line-strong:  #e5d5c3;   /* stone border */
+  --paper:        #ece0d2;   /* cream canvas */
+  --paper-sunk:   #e3d4c2;   /* stone surface */
+  --surface:      #f3eee7;
+  --surface-2:    #e9dccb;   /* sand */
+  --surface-3:    #e1c6ab;
+  --line:         rgba(124, 102, 77, .35);
+  --line-strong:  #7c664d;   /* stone border */
 
   /* --- ink: warm near-black, never pure --- */
-  --ink:          #343433;   /* heading charcoal */
-  --ink-muted:    #474645;   /* body brown */
-  --ink-faint:    #7e7e7d;
-  --ink-invert:   #fbfaf9;
+  --ink:          #573d21;   /* heading charcoal */
+  --ink-muted:    #7c664d;   /* body brown */
+  --ink-faint:    #9a8670;
+  --ink-invert:   #f3eee7;
   /* Outlines are drawn ink, not UI text: they stay dark in every theme.
      Binding them to --ink turned every line in the zoo near-white at dusk. */
-  --outline:      #7a6252;
+  --outline:      #573d21;
   /* Woven white. Like --outline, it is a material colour rather than a UI
      role, so it must not follow the theme — a white udeng that turned brown
      after sunset would just look like a mistake. */
-  --cloth:        #fffaf2;
-  --ivory:        #fff6e4;   /* tusks. Warm, and never a UI surface. */
+  --cloth:        #f3eee7;
+  --ivory:        #f1e6d4;   /* tusks. Warm, and never a UI surface. */
 
   /* --- the island: a clear, sunny meadow --- */
-  --grass:        #8ccd68;
-  --grass-deep:   #5fa552;
-  --grass-lush:   #99d472;
-  --grass-dry:    #cfd086;
-  --sand:         #f3e2b8;
-  --sand-deep:    #dfc790;
-  --earth:        #c97a45;
-  --earth-deep:   #96603a;
-  --bark:         #9a6b48;
-  --stone:        #d8dad4;   /* stepping-stone path */
-  --stone-deep:   #b6bcb6;
-  --picket:       #fffaf0;   /* the white picket fence */
-  --blush:        #ff8f9e;   /* cheeks */
+  --grass:        #8a9466;
+  --grass-deep:   #66704a;
+  --grass-lush:   #939e6c;
+  --grass-dry:    #b3a878;
+  --sand:         #e6cfae;
+  --sand-deep:    #cdb08a;
+  --earth:        #9a6a45;
+  --earth-deep:   #6e4a2e;
+  --bark:         #7c5a3e;
+  --stone:        #e1cdb2;   /* stepping-stone path */
+  --stone-deep:   #b9a68e;
+  --picket:       #f1e6d4;   /* the white picket fence */
+  --blush:        #e8987a;   /* cheeks */
   /* Meadow flowers: clear colours, never neon. */
-  --flower-pink:   #f490b2;
-  --flower-yellow: #f7cf4a;
-  --flower-lilac:  #b597ef;
-  --flower-peach:  #f7a174;
-  --roof:         #e0705f;   /* red roof tiles, gate sign */
+  --flower-pink:   #e6a7a0;
+  --flower-yellow: #f0c48a;
+  --flower-lilac:  #b79bb3;
+  --flower-peach:  #efa164;
+  --roof:         #e3a36e;   /* red roof tiles, gate sign */
 
   /* --- sky and water --- */
-  --sky-high:     #62b9f0;
-  --sky-low:      #e2f2fb;
-  --water:        #9fd6ea;
-  --water-deep:   #6fb3d2;
+  --sky-high:     #a9c6c4;
+  --sky-low:      #f0c7a3;
+  --water:        #a8c4bf;
+  --water-deep:   #7d9c98;
   /* The summer sea. Separate from --water, which the decorations use. */
-  --sea-shallow:  #9fe3d8;
-  --sea:          #76c2e2;
-  --sea-deep:     #5a9fcc;
-  --foam:         #fffdf8;
+  --sea-shallow:  #b5cfc6;
+  --sea:          #8fb0ad;
+  --sea-deep:     #6f8f8f;
+  --foam:         #f3eee7;
   /* The sky wash behind shop and card art. A UI role, so it flips. */
-  --art-sky:      #f2f0ed;
+  --art-sky:      #e9dccb;
 
   /* --- animal identity: the size hierarchy is a colour hierarchy too --- */
-  --elephant:     #9eacce;
-  --elephant-bg:  #eef1f8;
-  --lion:         #f2b45a;
-  --lion-bg:      #fff3dd;
-  --rabbit:       #fffaf3;
-  --rabbit-ear:   #f5a9ba;
-  --rabbit-bg:    #fdf3f6;
+  --elephant:     #a8969f;
+  --elephant-bg:  #e7ddd8;
+  --lion:         #e3a36e;
+  --lion-bg:      #f1dcc6;
+  --rabbit:       #f3ece1;
+  --rabbit-ear:   #e8b39a;
+  --rabbit-bg:    #efe5d8;
 
   /* --- confetti: the storybook accents (UI art only; the world uses the flower tokens) --- */
   --confetti-blue:   #64c6ff;
@@ -98,33 +100,35 @@
 
   /* --- state --- */
   /* The one serious action: near-black pills. */
-  --action:       #121212;
-  --action-hover: #000000;
-  --on-action:    #fbfaf9;
+  --action:       #e3a36e;
+  --action-hover: #efa164;
+  --on-action:    #573d21;
 
   /* Tokens and rewards: honey and gold. */
-  --accent:       #ffbb26;   /* honey */
-  --accent-soft:  #fff3d6;
-  --accent-deep:  #b77a00;   /* gold, darkened for text contrast */
-  --on-accent:    #121212;
+  --accent:       #e3a36e;   /* honey */
+  --accent-soft:  #f1dcc6;
+  --accent-deep:  #9a5a2a;   /* gold, darkened for text contrast */
+  --on-accent:    #573d21;
 
-  --link:         #ff3e00;   /* ember: inline links and callouts */
+  --link:         #9a5a2a;   /* ember: inline links and callouts */
 
-  --thrive:       #00995a;   /* healthy zoo, completed, streaks */
-  --thrive-soft:  #e0f7ea;
-  --caution:      #b77a00;   /* due soon */
-  --caution-soft: #fff3d6;
-  --overdue:      #e0202f;   /* the only red in the system */
-  --overdue-soft: #ffe4e6;
+  --thrive:       #5f6d40;   /* healthy zoo, completed, streaks */
+  --thrive-soft:  #dfe1c8;
+  --caution:      #9a6a1e;   /* due soon */
+  --caution-soft: #f1e2c4;
+  --overdue:      #a8432a;   /* the only red in the system */
+  --overdue-soft: #f0d5c8;
 
-  --focus:        #0086fc;
+  --focus:        #573d21;
 
   /* --- typography --- */
-  /* "Family" is not public; Bricolage Grotesque at 500 is the closest
-     free face — slightly condensed, slightly playful. */
-  --font-display: "Bricolage Grotesque", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-body:    "Inter", ui-sans-serif, system-ui, -apple-system,
-                  "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Nunito: rounded and soft, the picture-book voice. ui-rounded
+     (SF Pro Rounded on Apple) is the fallback if the web font is blocked. */
+  --font-display: "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body:    "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Uppercase condensed for every functional label: nav, buttons, chips. */
+  --font-ui:      "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --track-ui:     0;
   --font-mono:    ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 
   --step--2: clamp(.72rem, .7rem + .1vw, .75rem);      /* 12 */
@@ -146,23 +150,25 @@
   --sp-8: 64px;
 
   /* --- form: 10px cards, pills for buttons and badges --- */
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius:    10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-pill: 9999px;
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius:    0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-pill: 0px;
 
   /* --- depth: pressed into paper. Hairline insets first; the only drops
      are the faint ones that keep panels legible over the 3D world. --- */
-  --glass-tint: #fffdf8;     /* read by js/zoo/glass.js */
-  --glass-edge: inset 0 0 0 1px rgba(255, 255, 255, .55);
-  --hairline:   inset 0 0 0 1px var(--line);
-  --shadow-xs:  inset 0 0 0 1px rgba(0, 0, 0, .04);
-  --shadow-sm:  inset 0 0 0 1px rgba(0, 0, 0, .04), 0 1px 6px rgba(0, 0, 0, .04);
-  --shadow:     inset 0 0 0 1px rgba(0, 0, 0, .04), 0 1px 6px rgba(0, 0, 0, .04), 0 0 24px rgba(0, 0, 0, .05);
-  --shadow-lg:  0 0 24px rgba(0, 0, 0, .15);
-  --shadow-pop: 0 0 24px rgba(0, 0, 0, .15);
+  --glass-tint: #f3e6d6;
+  --glass-top:    #f6ecdf;   /* the glass tint runs cream to peach sand */
+  --glass-bottom: #e1c6ab;     /* read by js/zoo/glass.js */
+  --glass-edge: inset 0 0 0 1px rgba(124, 102, 77, .55);
+  --hairline:   inset 0 0 0 1px var(--line-strong);
+  --shadow-xs:  none;
+  --shadow-sm:  none;
+  --shadow:     none;
+  --shadow-lg:  none;
+  --shadow-pop: none;
 
   /* --- motion: sparing, and all of it answerable to one switch --- */
   --ease-out:    cubic-bezier(.22, 1, .36, 1);
@@ -183,57 +189,59 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --paper:        #121212;
-  --paper-sunk:   #000000;
-  --surface:      #1c1c1b;
-  --surface-2:    #242423;
-  --surface-3:    #2e2e2d;
-  --line:         #2e2e2d;
-  --line-strong:  #474645;
+  --paper:        #2a2017;
+  --paper-sunk:   #1f1811;
+  --surface:      #34291e;
+  --surface-2:    #3d3024;
+  --surface-3:    #4a3a2b;
+  --line:         rgba(225, 198, 171, .22);
+  --line-strong:  #a8916f;
 
-  --ink:          #fbfaf9;
-  --ink-muted:    #d6d4d0;
-  --ink-faint:    #9a9997;
-  --ink-invert:   #121212;
-  --outline:      #5c4a3e;
+  --ink:          #f1e6d4;
+  --ink-muted:    #d2bea3;
+  --ink-faint:    #a8916f;
+  --ink-invert:   #2a2017;
+  --outline:      #2a2017;
   --cloth:        #f4efe4;
   --ivory:        #efe4cc;
 
   /* No savanna, sky, water or animal overrides here: the moon does night. */
-  --art-sky:      #242423;
+  --art-sky:      #3d3024;
 
   --elephant-bg:  #23262e;
   --lion-bg:      #2e2618;
   --rabbit-bg:    #2c2427;
 
-  --action:       #fbfaf9;
-  --action-hover: #ffffff;
-  --on-action:    #121212;
+  --action:       #e3a36e;
+  --action-hover: #efa164;
+  --on-action:    #2a2017;
 
-  --accent:       #ffbb26;
-  --accent-soft:  #33290f;
-  --accent-deep:  #ffcd6c;
-  --on-accent:    #121212;
+  --accent:       #e3a36e;
+  --accent-soft:  #4a3a2b;
+  --accent-deep:  #efa164;
+  --on-accent:    #2a2017;
 
-  --link:         #ff7a4d;
+  --link:         #efa164;
 
-  --thrive:       #2fdc8e;
-  --thrive-soft:  #0f2b1e;
-  --caution:      #ffcd6c;
-  --caution-soft: #33290f;
-  --overdue:      #ff5a66;
-  --overdue-soft: #3a1418;
+  --thrive:       #b5bf8c;
+  --thrive-soft:  #33361f;
+  --caution:      #f0c48a;
+  --caution-soft: #3d3020;
+  --overdue:      #e8987a;
+  --overdue-soft: #45261c;
 
-  --focus:        #64c6ff;
+  --focus:        #f0c48a;
 
-  --glass-tint: #1c1c1b;
-  --glass-edge: inset 0 0 0 1px rgba(255, 255, 255, .12);
-  --hairline:   inset 0 0 0 1px var(--line);
-  --shadow-xs:  inset 0 0 0 1px rgba(255, 255, 255, .06);
-  --shadow-sm:  inset 0 0 0 1px rgba(255, 255, 255, .06), 0 1px 6px rgba(0, 0, 0, .3);
-  --shadow:     inset 0 0 0 1px rgba(255, 255, 255, .06), 0 2px 12px rgba(0, 0, 0, .35);
-  --shadow-lg:  0 0 24px rgba(0, 0, 0, .5);
-  --shadow-pop: 0 0 24px rgba(0, 0, 0, .5);
+  --glass-tint: #3d3024;
+  --glass-top:    #4a3a2b;
+  --glass-bottom: #2a2017;
+  --glass-edge: inset 0 0 0 1px rgba(225, 198, 171, .3);
+  --hairline:   inset 0 0 0 1px var(--line-strong);
+  --shadow-xs:  none;
+  --shadow-sm:  none;
+  --shadow:     none;
+  --shadow-lg:  none;
+  --shadow-pop: none;
 }
 
 /* ---------- one switch for motion ----------

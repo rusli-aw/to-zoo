@@ -104,7 +104,15 @@ export function createMoodBars(zoo, population) {
     for (const id of [...bars.keys()]) if (!alive.has(id)) drop(id);
   });
 
+  let sleeping = false;
+
   return {
+    /** Bedtime: every bar shows a drifting "z z z" instead of a face. */
+    setSleeping(on) {
+      sleeping = on;
+      host.toggleAttribute('data-sleeping', on);
+    },
+
     /** Hide while a sheet, dialog or release owns the screen. */
     setSuspended(value) {
       suspended = value;

@@ -108,11 +108,11 @@ export const artIcon = (build, cls) => icon(ART[build] ?? 'sparkle', cls);
 /** Avatar swatches. Older saves stored an emoji here; any string works as a seed. */
 export const AVATAR_SWATCHES = ['sage', 'sky', 'peach', 'lilac', 'honey', 'rose', 'mint', 'slate'];
 
-const DEFAULT_SWATCH = '#b9bfcc';
+const DEFAULT_SWATCH = '#c9ad8c';
 
 const SWATCH = {
-  sage: '#8fbf7a', sky: '#6cb6e8', peach: '#f2a27a', lilac: '#a98fe0',
-  honey: '#f0bb45', rose: '#ea8aa6', mint: '#5cc6a8', slate: '#8a98b4',
+  sage: '#9aab84', sky: '#a9c6c4', peach: '#e3a36e', lilac: '#a8969f',
+  honey: '#d9a85c', rose: '#d99a8a', mint: '#b5bf8c', slate: '#8e7389',
 };
 
 function hash(str) {

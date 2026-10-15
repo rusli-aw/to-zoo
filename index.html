@@ -6,11 +6,12 @@
 <title>To-Zoo — an animal rescue for your to-do list</title>
 <meta name="description" content="A to-do list that lives in a small 3D animal rescue. Every unfinished task is an animal in your care; finish the task and the animal goes home.">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#fbfaf9">
+<meta name="theme-color" content="#ece0d2">
+
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..700&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400..800&display=swap">
 
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/app.css">
@@ -144,6 +145,14 @@
 </div>
 
 <!-- ══ the app ═══════════════════════════════════════════════ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <!-- Ink pen: a faint displacement so every icon line wavers like a nib. -->
+  <filter id="ink-pen" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="7"/>
+    <feDisplacementMap in="SourceGraphic" scale="1.3" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
 <div class="app" id="app" data-view="zoo" hidden>
 
   <!-- The 3D world. Everything else floats over it. -->
@@ -163,6 +172,10 @@
   </div>
 
   <!-- ── top left: identity and the one sentence that matters ── -->
+  <button class="announce" id="announce" type="button" hidden></button>
+  <!-- Phones: one glass strip behind the whole top HUD. -->
+  <div class="hud-strip" aria-hidden="true"></div>
+
   <header class="hud hud--tl">
     <div class="brand">
       <span class="brand__mark" aria-hidden="true">
@@ -183,6 +196,7 @@
       </span>
       <span class="brand__name">To-Zoo</span>
     </div>
+    <button class="group-chip" id="group-chip" type="button" hidden></button>
     <p class="status-line" id="status-line" aria-live="polite">Your zoo is thriving</p>
   </header>
 

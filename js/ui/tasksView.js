@@ -16,6 +16,7 @@ import {
 import { getState, reorderTasks } from '../store.js';
 import { openTaskPanel } from './taskPanel.js';
 import { glyph } from './icons.js';
+import { portraitOf } from '../zoo/portraits.js';
 
 let query = '';
 let sort = 'priority';
@@ -228,10 +229,12 @@ function card(task) {
               aria-label="Complete and release ${escapeAttr(task.title)}">
         <span class="card__tick" aria-hidden="true"></span>
       </button>
+      <img class="card__portrait" src="${portraitOf(task.animalType)}" alt="" aria-hidden="true">
       <button class="card__main" type="button" data-open>
         <span class="card__title">${escapeHtml(task.title)}</span>
         <span class="card__meta">
           <span class="card__due" data-band="${band}">${escapeHtml(dueLabel(task))}</span>
+          ${task.by ? `<span class="card__by">${escapeHtml(task.by.name)}</span>` : ''}
           ${task.notes ? `<span class="card__note">${escapeHtml(task.notes.slice(0, 60))}${
             task.notes.length > 60 ? '…' : ''}</span>` : ''}
         </span>

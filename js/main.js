@@ -12,6 +12,12 @@ import { buildEnvironment } from './zoo/environment.js';
 import { buildGrass } from './zoo/grass.js';
 import { buildFence } from './zoo/fence.js';
 import { createAudio } from './zoo/audio.js';
+import { setStepListener } from './zoo/animals.js';
+import { buildDuskLife } from './zoo/dusklife.js';
+import { renderPortraits } from './zoo/portraits.js';
+import { renderThumbnails } from './zoo/thumbnails.js';
+import { createGroupSync, parseInvite } from './group.js';
+import { avatarMark } from './ui/icons.js';
 import { createSpace } from './zoo/space.js';
 import { createDaylight, clockIsNight } from './zoo/daylight.js';
 import { buildSeasons } from './zoo/seasons.js';
@@ -34,9 +40,10 @@ import { createMoodBars } from './ui/moodBars.js';
 import { openAddTask } from './ui/addTask.js';
 import { openTaskPanel } from './ui/taskPanel.js';
 import { flyTokens, toast } from './ui/toast.js';
+import { confirmDialog } from './ui/dialog.js';
 import { isDialogOpen } from './ui/dialog.js';
 import { mountViews } from './ui/views.js';
-import { runOnboarding } from './ui/onboarding.js';
+import { runIntro } from './ui/intro.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -59,11 +66,10 @@ export function applyPreferences() {
   const { settings } = getState();
   const root = document.documentElement;
 
-  const mode = settings.theme === 'light' ? 'day'
-    : settings.theme === 'dark' ? 'night'
-    : 'auto';
-
-  const dark = mode === 'night' || (mode === 'auto' && clockIsNight());
+  // Always daylight, always light panels. "Time of day" now only chooses
+  // between following the clock (morning to golden hour) and a fixed midday.
+  const mode = settings.theme === 'light' ? 'day' : 'auto';
+  const dark = false;
   root.dataset.theme = dark ? 'dark' : 'light';
 
   const prefersLess = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -135,6 +141,7 @@ async function boot() {
   // Seasons own everything past the fence, so they are built before the
   // daylight takes over the sky.
   const seasons = buildSeasons(zoo, environment);
+  buildDuskLife(zoo);
 
   const daylight = createDaylight(zoo, environment);
   zoo.ownsLighting = true;
@@ -149,16 +156,33 @@ async function boot() {
   // repaint the panels as well as the sky.
   daylight.onNightChange(() => {
     if (getState().settings.theme === 'system') repaintTheme();
+    applyBedtime();
   });
 
   const population = createPopulation(zoo, space);
+  try {
+    renderPortraits(zoo);
+    renderThumbnails(zoo);
+  } catch (err) {
+    console.warn('[to-zoo] portraits unavailable', err);
+  }
   const release = createRelease(zoo, population, environment);
   const hud = createHud({ onFocusTask: focusTask });
+
+  /** Night means bedtime: animals settle, bars snooze, the HUD says so. */
+  function applyBedtime() {
+    const night = daylight.isNight;
+    population.setSleeping(night);
+    moodBars?.setSleeping(night);
+    hud.setSleeping(night);
+  }
 
   const audio = createAudio(zoo, {
     treeSpots: () => seasons.group.children.at(-1)?.userData.treeSpots ?? [],
     animals: () => population.positions(),
   });
+  setStepListener((type, pos, foot) => audio.step(type, pos.x, pos.z, foot));
+
   // Sound needs a user gesture. If it was left on, the first click starts it.
   if (getState().settings.sound) {
     window.addEventListener('pointerdown', () => {
@@ -168,6 +192,7 @@ async function boot() {
 
   const picking = createPicking(zoo, population, { onSelect: openTask });
   const moodBars = createMoodBars(zoo, population);
+  applyBedtime();
 
   /** True while coins are mid-flight, so the counter lands with them. */
   let tokensInFlight = false;
@@ -177,6 +202,11 @@ async function boot() {
 
   function syncWorld() {
     const state = getState();
+
+    // The gate sign: the keeper's name if they have given one.
+    const name = (state.user.name || '').trim();
+    environment.setSign(state.group ? state.group.name
+      : name && name !== 'You' ? `${name}\u2019s Zoo` : 'My Zoo');
 
     /* What dresses the world is the *share* of animals being neglected, not
        how many animals there are. A ratio cannot grow just because the zoo is
@@ -191,6 +221,7 @@ async function boot() {
     clutter.setMessiness(neglectRatio);
     fence.setStyle(state.fenceStyle);
     seasons.setSeason(state.season);
+    grass.setVisible(!['summer', 'winter'].includes(seasons.season));
 
     const items = shopItems(state);
     decorations.sync(items);
@@ -431,8 +462,59 @@ async function boot() {
 
   /* ------------------------------------------------------------ views -- */
 
+  /* --------------------------------------------------------- group zoo -- */
+
+  const groupChip = $('group-chip');
+  const group = createGroupSync({
+    onPeople(people) {
+      renderGroupChip(people);
+      if (document.getElementById('app').dataset.view === 'friends') views.render();
+    },
+    onError(err) {
+      toast({ title: 'Group zoo is offline', note: String(err?.message ?? err) });
+    },
+  });
+
+  function renderGroupChip(people = group.people) {
+    const g = getState().group;
+    groupChip.hidden = !g;
+    if (!g) return;
+    groupChip.innerHTML = `
+      <span class="group-chip__faces">${people.slice(0, 4).map((p) => `<span>${avatarMark(p.name, p.avatar)}</span>`).join('')}</span>
+      <span class="group-chip__name">${g.name.replace(/[<>&]/g, '')}</span>`;
+    groupChip.title = `${g.name}: ${people.length} here now`;
+  }
+  groupChip?.addEventListener('click', () => views.show('friends'));
+  renderGroupChip();
+  subscribe((_, change) => { if (change.type.startsWith('group:')) renderGroupChip(); });
+
+  /** Opened from an invite link: offer to join (after the intro, if any). */
+  async function joinFromUrl() {
+    const params = new URLSearchParams(location.search);
+    const id = parseInvite(`?zoo=${params.get('zoo') ?? ''}`);
+    if (!id) return;
+    params.delete('zoo');
+    history.replaceState(null, '', `${location.pathname}${params.size ? `?${params}` : ''}${location.hash}`);
+    if (getState().group?.id === id) return;
+    try {
+      const zoo = await group.peek(id);
+      if (!zoo) { toast({ title: 'That group zoo doesn\u2019t exist any more' }); return; }
+      const yes = await confirmDialog({
+        title: `Join ${zoo.name}?`,
+        body: `${zoo.count} animal${zoo.count === 1 ? '' : 's'} waiting. Your own zoo is kept safe; you can go back to it from Friends any time.`,
+        confirmLabel: 'Join the zoo',
+      });
+      if (!yes) return;
+      await group.join(id);
+      syncWorld();
+      toast({ title: `Welcome to ${zoo.name}` });
+    } catch (err) {
+      toast({ title: 'Could not open the invite', note: String(err?.message ?? err) });
+    }
+  }
+
   const views = mountViews({
-    zoo, population, picking, hud,
+    zoo, population, picking, hud, group,
     onAddTask: addTask,
     onOpenTask: openTask,
     onComplete: completeAndRelease,
@@ -538,16 +620,10 @@ async function boot() {
     }
 
     if (!getState().onboarded) {
-      runOnboarding({
-        onFinish({ demo }) {
-          finishOnboarding();
-          if (demo) loadDemo();
-          syncWorld();
-          if (!demo) addTask();
-        },
-      });
+      startIntro();
       return;
     }
+    joinFromUrl();
 
     // Settle the bill after the zoo is on screen, so the coins have something
     // to fly to and from.
@@ -558,11 +634,34 @@ async function boot() {
   // frames at all, so the timer is what actually reveals the app there.
   setTimeout(reveal, 1500);
 
+  /**
+   * The walk-in. Runs on first launch, and again from Profile → Replay intro.
+   * Skipping drops you straight into the zoo; finishing offers a first task
+   * or the demo zoo.
+   */
+  let intro = null;
+  function startIntro() {
+    if (intro) return;
+    intro = runIntro({
+      zoo, environment, picking, space,
+      onFinish({ demo, skipped }) {
+        intro = null;
+        finishOnboarding();
+        if (demo) loadDemo();
+        syncWorld();
+        if (new URLSearchParams(location.search).has('zoo')) joinFromUrl();
+        else if (!demo && !skipped) setTimeout(addTask, 420);
+      },
+    });
+  }
+  window.addEventListener('to-zoo:intro', startIntro);
+  window.addEventListener('to-zoo:show', (e) => views.show(e.detail));
+
   // Exposed for debugging and for driving the app from the console.
   window.toZoo = {
     zoo, environment, grass, fence, clutter, decorations, population, picking, release, views,
     space, daylight, moodBars, seasons,
-    syncWorld, addTask, openTask, completeAndRelease,
+    syncWorld, addTask, openTask, completeAndRelease, startIntro,
   };
 }
 

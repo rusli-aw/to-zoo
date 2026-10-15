@@ -23,9 +23,11 @@ const MAX = 24;
  *  the task sheet takes a little more because it holds paragraphs. */
 const TARGETS = [
   ['.sheet', 0.4],
+  ['.group-chip', 0.25],
+  ['.hud-strip', 0.3],
+  ['.intro__card', 0.42],
   ['.health', 0.2],
   ['.nav', 0.2],
-  ['.status-line', 0.2],
   ['.today', 0.2],
   ['.piggy', 0.2],
   ['.avatar-btn', 0.2],
@@ -71,7 +73,24 @@ const compositeFragment = /* glsl */ `
   uniform int uCount;
   uniform vec4 uRects[${MAX}];   // x, y (bottom-left, buffer px), w, h
   uniform vec2 uShape[${MAX}];   // corner radius (CSS px), tint opacity
+  uniform sampler2D tDepth;
+  uniform float uNear;
+  uniform float uFar;
+  uniform vec3 uHaze;            // linear; the horizon colour the distance dissolves into
+  uniform float uPaint;          // 0 plain render, 1 full painted pass
+  uniform vec3 uTintTop;         // sRGB; the library's white-to-grey, warmed
+  uniform vec3 uTintBottom;
+  uniform float uGrain;
   varying vec2 vUv;
+
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+  float vnoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
+               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+  }
 
   // liquid-glass-js defaults (controls.js)
   const float EDGE_INTENSITY = 0.01;
@@ -115,9 +134,66 @@ const compositeFragment = /* glsl */ `
     return c / total;
   }
 
+  float viewZ(vec2 uv) {
+    float d = texture2D(tDepth, uv).x;
+    float ndc = d * 2.0 - 1.0;
+    return (2.0 * uNear * uFar) / (uFar + uNear - ndc * (uFar - uNear));
+  }
+
+  /*
+   * The painted pass. Three things, all in one place so they agree:
+   *   - brush edges: where depth jumps, the nearer side gets a soft walnut
+   *     rim, sampled at a noise-wobbled offset so the line is uneven, like
+   *     the edge of a cut-paper layer or a gouache stroke;
+   *   - flat tones: luminance snaps toward a few steps, dithered with paper
+   *     noise so the bands look printed rather than posterised;
+   *   - haze: distance dissolves into the horizon colour far harder than
+   *     fog, so the back ridges almost vanish into the sky.
+   * The sky itself (nothing written to depth) is left alone.
+   */
+  vec3 paint(vec3 col, vec2 frag) {
+    float raw = texture2D(tDepth, vUv).x;
+    if (raw >= 0.99999) return col;
+    float z = viewZ(vUv);
+
+    // Edge: Laplacian of 1/z, which is flat on planes, so the ground and
+    // walls stay clean and only real silhouettes and creases ink.
+    vec2 px = 1.0 / uRes;
+    float wob = vnoise(frag * 0.045) * 2.0 - 1.0;
+    float r = (0.9 + 0.5 * vnoise(frag * 0.11)) * uScale;
+    vec2 dx = vec2(px.x * r, px.y * r * wob * 0.6);
+    vec2 dy = vec2(px.x * r * wob * 0.6, px.y * r);
+    float c = 1.0 / z;
+    float zl = viewZ(vUv - dx), zr = viewZ(vUv + dx), zd = viewZ(vUv - dy), zu = viewZ(vUv + dy);
+    float lap = abs(1.0 / zl + 1.0 / zr - 2.0 * c) + abs(1.0 / zd + 1.0 / zu - 2.0 * c);
+    // Only the nearer side of a jump gets ink.
+    float nearer = step(z, min(min(zl, zr), min(zd, zu)) + 0.05);
+    float edge = smoothstep(0.04, 0.12, lap / c) * mix(0.3, 1.0, nearer);
+    edge *= 1.0 - smoothstep(25.0, 60.0, z);   // far things are too small to ink
+
+    vec3 srgb = toSRGB(col);
+    float lum = dot(srgb, vec3(0.299, 0.587, 0.114));
+    // Soft steps: each band edge is a short ramp, wobbled by large-scale
+    // paper noise so the boundaries meander like a wet brush edge.
+    float steps = 5.0;
+    float x = lum * steps + (vnoise(frag * 0.012) - 0.5) * 0.5;
+    float lq = (floor(x) + smoothstep(0.35, 0.65, fract(x))) / steps;
+    srgb *= mix(1.0, lq / max(lum, 0.02), 0.5 * uPaint);
+
+    // Walnut ink, soft: multiply toward a warm dark rather than black.
+    srgb = mix(srgb, srgb * vec3(0.6, 0.5, 0.44), edge * 0.38 * uPaint);
+    col = toLinear(srgb);
+
+    // Haze: almost total on the far ridges.
+    float haze = smoothstep(18.0, 120.0, z);
+    col = mix(col, uHaze, pow(haze, 0.8) * 0.85 * uPaint);
+    return col;
+  }
+
   void main() {
     vec2 frag = gl_FragCoord.xy;
     vec3 col = texture2D(tScene, vUv).rgb;
+    if (uPaint > 0.0) col = paint(col, frag);
 
     for (int i = 0; i < ${MAX}; i++) {
       if (i >= uCount) break;
@@ -169,7 +245,7 @@ const compositeFragment = /* glsl */ `
       // Vertical white-to-grey tint, then a faint pull toward the colours
       // sampled across the pane's top, middle and bottom.
       float tint = uShape[i].y;
-      glass = mix(glass, mix(vec3(1.0), vec3(0.7), coord.y), tint);
+      glass = mix(glass, mix(uTintTop, uTintBottom, coord.y), tint);
       float cx = (r.x + r.z * 0.5) / uRes.x;
       float top = (r.y + r.w * 0.9) / uRes.y;
       float mid = (r.y + r.w * 0.5) / uRes.y;
@@ -186,6 +262,18 @@ const compositeFragment = /* glsl */ `
       break;
     }
 
+    // Paper: the whole frame is printed on cream stock. A fine tooth plus
+    // soft blotches, multiplied in, so flat areas read as gouache on paper.
+    if (uGrain > 0.0) {
+      vec2 q = frag / uScale;
+      float tooth = hash(floor(q)) - 0.5;
+      float blotch = vnoise(q * 0.012) * 0.6 + vnoise(q * 0.045) * 0.4 - 0.5;
+      vec3 srgb = toSRGB(col);
+      srgb *= 1.0 + tooth * 0.05 * uGrain + blotch * 0.07 * uGrain;
+      srgb = mix(srgb, srgb * vec3(1.02, 0.99, 0.95), 0.5 * uGrain);   // warm stock
+      col = toLinear(srgb);
+    }
+
     gl_FragColor = vec4(col, 1.0);
     #include <colorspace_fragment>
   }
@@ -198,6 +286,9 @@ export function createGlass(zoo) {
   const { renderer } = zoo;
   const opts = { type: THREE.HalfFloatType, depthBuffer: true };
   const sceneRT = new THREE.WebGLRenderTarget(1, 1, { ...opts, samples: zoo.tier === 'low' ? 0 : 4 });
+  // Depth, for the painted pass: inked silhouette edges and distance haze.
+  sceneRT.depthTexture = new THREE.DepthTexture(1, 1);
+  sceneRT.depthTexture.type = THREE.UnsignedIntType;
   const blurRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
 
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -227,6 +318,14 @@ export function createGlass(zoo) {
       uCount: { value: 0 },
       uRects: { value: rects },
       uShape: { value: shapes },
+      uTintTop: { value: new THREE.Vector3(1, 1, 1) },
+      uTintBottom: { value: new THREE.Vector3(0.7, 0.7, 0.7) },
+      uGrain: { value: 1 },
+      tDepth: { value: sceneRT.depthTexture },
+      uNear: { value: 0.5 },
+      uFar: { value: 260 },
+      uHaze: { value: zoo.atmosphere.uHorizon.value },
+      uPaint: { value: 1 },
     },
     depthTest: false,
     depthWrite: false,
@@ -259,8 +358,18 @@ export function createGlass(zoo) {
     return r;
   }
 
-  /* The library's tint is the same in every theme; nothing to re-read. */
-  function applyTheme() {}
+  /** The tint gradient comes from --glass-top / --glass-bottom. */
+  const _c = new THREE.Color();
+  function readTint(name, fallback, out) {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+    _c.setStyle(raw, THREE.NoColorSpace);   // keep sRGB values; the shader mixes in sRGB
+    out.set(_c.r, _c.g, _c.b);
+  }
+  function applyTheme() {
+    readTint('--glass-top', '#ffffff', composite.uniforms.uTintTop.value);
+    readTint('--glass-bottom', '#b3b3b3', composite.uniforms.uTintBottom.value);
+  }
+  applyTheme();
 
   /** Collect the panes on screen this frame, in buffer pixels. */
   function collect(canvasRect, scale, bufferH) {
@@ -269,6 +378,8 @@ export function createGlass(zoo) {
       if (n >= MAX) break;
       const cs = getComputedStyle(el);
       if (!el.offsetParent && cs.position !== 'fixed') continue;
+      // A layout can opt a pane out (e.g. phones fold the pills into a strip).
+      if (cs.getPropertyValue('--glass').trim() === 'off') continue;
       // Faded-out panes should not leave glass behind — including ones whose
       // HUD corner is fading, so walk up and multiply the opacities.
       if (cs.visibility === 'hidden' || effectiveOpacity(el, cs) < 0.35) continue;
@@ -307,6 +418,8 @@ export function createGlass(zoo) {
       const canvasRect = renderer.domElement.getBoundingClientRect();
       const scale = w / Math.max(1, canvasRect.width);
       composite.uniforms.uRes.value.set(w, h);
+      composite.uniforms.uNear.value = camera3d.near;
+      composite.uniforms.uFar.value = camera3d.far;
       composite.uniforms.uScale.value = scale;
       composite.uniforms.uCount.value = collect(canvasRect, scale, h);
 

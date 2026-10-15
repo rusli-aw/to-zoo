@@ -16,6 +16,7 @@ import {
   mostNeglected, statusLine, todayStats, totalUpkeep, waitingLabel, zooMoodLabel,
 } from '../model.js';
 import { mood as zooMoodOf } from '../store.js';
+import { mood as taskMood } from '../model.js';
 import { reduced } from './motion.js';
 import { avatarMark, glyph } from './icons.js';
 
@@ -99,13 +100,46 @@ export function createHud(handlers = {}) {
     els.tokens.dataset.level = level >= 0.999 ? 'full' : level > 0.05 ? 'some' : 'empty';
   }
 
+  let sleeping = false;
+  let lastState = null;
+
+  const strip = document.getElementById('announce');
+  const app = document.getElementById('app');
+  strip?.addEventListener('click', () => window.dispatchEvent(new CustomEvent('to-zoo:show', { detail: 'tasks' })));
+  const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  /** "2 animals waiting since Tuesday" — the restless ones, by oldest. */
+  function announce(open) {
+    if (!strip) return;
+    const restless = open.filter((t) => taskMood(t) < 35);
+    let text = '';
+    if (restless.length) {
+      const oldest = Math.min(...restless.map((t) => t.createdAt));
+      const days = (Date.now() - oldest) / 86400000;
+      const since = days < 1 ? 'today' : days < 6.5 ? `since ${DAYS[new Date(oldest).getDay()]}`
+        : `for ${Math.round(days)} days`;
+      const n = restless.length;
+      text = `${n === 1 ? 'One animal has' : `${n} animals have`} been waiting ${since}. Visit them \u2192`;
+    }
+    strip.hidden = !text;
+    if (text && strip.textContent !== text) strip.textContent = text;
+    app?.classList.toggle('has-announce', !!text);
+  }
+
   return {
+    /** At night the status line says so, whatever else is going on. */
+    setSleeping(on) {
+      sleeping = on;
+      if (lastState) this.render(lastState);
+    },
+
     /**
      * @param {any} state
      * @param {{ holdTokens?: boolean }} [opts]  hold the counter back while
      *        coins are still in the air, so the number lands with them
      */
     render(state, opts = {}) {
+      lastState = state;
       const { tasks, user } = state;
       const open = tasks.filter((t) => !t.completed);
       const zooMood = zooMoodOf(state);
@@ -113,10 +147,13 @@ export function createHud(handlers = {}) {
       const label = zooMoodLabel(zooMood);
 
       // ── the one sentence ──
-      const line = statusLine(tasks, zooMood);
+      const line = sleeping && open.length ? 'The zoo is sleeping. Zzz.' : statusLine(tasks, zooMood);
       if (els.status.textContent !== line) els.status.textContent = line;
-      els.status.dataset.tone = label.tone === 'overdue' ? 'overdue'
+      els.status.dataset.tone = sleeping ? '' : label.tone === 'overdue' ? 'overdue'
         : zooMood >= 85 ? 'thrive' : '';
+
+      // ── the strip: one gentle nudge, only when there is something to say ──
+      announce(open);
 
       // ── today ──
       els.todayCount.textContent = String(stats.completedToday);

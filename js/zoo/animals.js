@@ -22,6 +22,10 @@ import { Spring } from './spring.js';
 
 const BUILDERS = { elephant: buildElephant, lion: buildLion, rabbit: buildRabbit };
 
+/** Footfall listener, set by the sound layer: (type, position, foot) => void. */
+let onStep = null;
+export function setStepListener(fn) { onStep = fn; }
+
 /** Geometry is identical for every animal of a species — build it once. */
 const cache = new Map();
 function partsFor(type) {
@@ -354,7 +358,11 @@ export function createAnimal(ink, type, seedKey = '') {
           const arc = Math.abs(Math.sin(stride));
           // Landing: the hop count ticks over. Squash into the grass.
           const step = Math.floor(stride / Math.PI);
-          if (step !== lastStep) { squash.kick(-3.2 * walk); lastStep = step; }
+          if (step !== lastStep) {
+            squash.kick(-3.2 * walk);
+            lastStep = step;
+            onStep?.(type, root.position, step & 1);
+          }
           root.position.y = arc ** 0.7 * 0.3 * walk;
           root.rotation.x = -Math.cos(stride) * 0.22 * walk;   // nose up, then down
           root.rotation.z += (0 - root.rotation.z) * damp;
@@ -364,7 +372,11 @@ export function createAnimal(ink, type, seedKey = '') {
           const stride = elapsed * 7 * spec.speed + phase;
           // Each footfall: a soft little settle.
           const step = Math.floor(stride / Math.PI);
-          if (step !== lastStep) { squash.kick(-0.8 * walk); lastStep = step; }
+          if (step !== lastStep) {
+            squash.kick(-0.8 * walk);
+            lastStep = step;
+            onStep?.(type, root.position, step & 1);
+          }
           root.rotation.z = Math.sin(stride) * 0.055 * walk;
           root.position.y = Math.abs(Math.sin(stride)) * 0.05 * walk;
           root.rotation.x += (0 - root.rotation.x) * damp;

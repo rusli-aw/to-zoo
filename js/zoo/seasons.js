@@ -24,15 +24,26 @@ import { reduced } from '../ui/motion.js';
  */
 export const SEASONS = {
   island: {
-    id: 'island', name: 'Island', emoji: '\u{1F3DD}\u{FE0F}', cost: 0,
-    blurb: 'Soft round trees, cedars, gentle hills and a few flowers.',
+    id: 'island', name: 'Dusk meadow', emoji: '\u{1F3DD}\u{FE0F}', cost: 0,
+    blurb: 'Sage trees, olive meadow, and mauve hills fading into a peach dusk.',
     tree: 'island',
     ground: 'grass', wild: 'grass-lush', path: 'stone',
-    canopy: '#79c05c', canopy2: '#4f9a55', trunk: 'bark',
-    hillColor: '#94cf74',
+    canopy: '#9aab84', canopy2: '#6f7d55', trunk: 'bark',
+    hillColor: '#8f8a6a',
+    // Rows of mauve ridges, near to far, each paler as it recedes into the
+    // peach haze — the painted-landscape horizon.
+    ridges: [
+      { z: -34, color: '#8e7389', rad: [5, 9] },
+      { z: -52, color: '#9d8299', rad: [7, 12] },
+      { z: -74, color: '#b096aa', rad: [9, 15] },
+    ],
     grassOutside: 1,
     flowers: true,
-    weather: null,
+    // A few leaves and petals always drifting down through the light.
+    weather: {
+      kind: 'leaves', colors: ['#9aab84', '#b5bf8c', '#e3a36e', '#f0c48a', '#d8deb7'],
+      count: 46, fall: 0.22, drift: 1.4,
+    },
   },
   spring: {
     id: 'spring', name: 'Spring', emoji: '\u{1F338}', cost: 120,
@@ -73,7 +84,7 @@ export const SEASONS = {
     canopy: null, trunk: '#5a4636',
     grassOutside: 0,
     snow: true,
-    weather: { kind: 'snow', color: '#ffffff', count: 200, fall: 0.45, drift: 0.7 },
+    weather: { kind: 'snow', color: '#ffffff', count: 260, fall: 0.45, drift: 0.7 },
   },
 };
 
@@ -215,8 +226,8 @@ function tree(kind, x, z, scale, r, out) {
 /* ------------------------------------------------------------- weather --- */
 
 /**
- * Petals, leaves or snow. One instanced mesh that falls, drifts and wraps —
- * the same trick the release leaf-burst uses, but looping forever.
+ * Petals, leaves or snow, falling under gravity and landing. One instanced
+ * mesh for the lot.
  */
 function createWeather(zoo, spec) {
   const geometry = spec.kind === 'snow'
@@ -224,7 +235,7 @@ function createWeather(zoo, spec) {
     : blob(0.075, [1, 0.28, 0.62], {}, 5);
 
   const material = new THREE.MeshLambertMaterial({
-    color: new THREE.Color(spec.color),
+    color: new THREE.Color(spec.colors ? '#ffffff' : spec.color),
     transparent: true,
     opacity: spec.kind === 'snow' ? 0.95 : 0.9,
     depthWrite: false,
@@ -236,34 +247,95 @@ function createWeather(zoo, spec) {
   zoo.scene.add(mesh);
 
   const dummy = new THREE.Object3D();
-  const r = rng(3141);
-  const flakes = Array.from({ length: spec.count }, () => ({
-    x: (r() - 0.5) * 46,
-    y: r() * 16,
-    z: -18 + r() * 34,
-    spin: (r() - 0.5) * 3,
-    phase: r() * Math.PI * 2,
-    speed: 0.6 + r() * 0.8,
-    size: 0.7 + r() * 0.7,
-  }));
+  if (spec.colors) {
+    const c = new THREE.Color();
+    for (let i = 0; i < spec.count; i += 1) mesh.setColorAt(i, c.set(spec.colors[i % spec.colors.length]));
+  }
+  /*
+   * Real falling, not a conveyor belt. Each piece has a velocity that gravity
+   * pulls on and air drag holds back, so it accelerates to its own terminal
+   * speed: snow is light and settles at a slow drift, leaves are heavier but
+   * flat, so they fall fast edge-on and slowly face-down.
+   *
+   * Leaves also do the falling-leaf pendulum: they swing side to side, tilt
+   * into each swing, and gain a little lift at the bottom of every arc. A
+   * gust field pushes everything sideways together.
+   *
+   * When a piece reaches the ground it lies there — flat, still — for a few
+   * seconds, then fades and is recycled at the top. Snow gathers in a light
+   * dusting; leaves scatter across the lawn.
+   */
+  const leafy = spec.kind !== 'snow';
+  const G = 9.8 * (leafy ? 0.07 : 0.035);           // tuned for a 1-unit ≈ 1-metre world, slowed for calm
+  const DRAG = leafy ? 1.6 : 2.6;                    // higher drag = lower terminal speed
+  const spawn = (f, anywhere) => {
+    f.x = (Math.random() - 0.5) * 46;
+    f.z = -18 + Math.random() * 34;
+    f.y = anywhere ? Math.random() * 14 : 12 + Math.random() * 4;
+    f.vx = 0; f.vy = -Math.random() * 0.3; f.vz = 0;
+    f.rest = 0;
+    f.swing = Math.random() * Math.PI * 2;
+    f.swingRate = 1.6 + Math.random() * 1.4;
+    f.spin = (Math.random() - 0.5) * 3;
+    f.size = 0.7 + Math.random() * 0.7;
+    f.yaw = Math.random() * Math.PI * 2;
+  };
+  const flakes = Array.from({ length: spec.count }, () => {
+    const f = {};
+    spawn(f, true);
+    return f;
+  });
+  const REST = leafy ? 6 : 4;   // seconds lying on the ground before recycling
 
   const stop = zoo.onFrame((dt, elapsed) => {
     // Reduced motion keeps the weather on screen but stops it moving, so the
     // season still reads without anything drifting in the corner of your eye.
-    const step = reduced() ? 0 : dt;
+    const step = reduced() ? 0 : Math.min(dt, 0.05);
+    // One gust field for the whole sky, so pieces drift together.
+    const gust = Math.sin(elapsed * 0.35) * 0.6 + Math.sin(elapsed * 0.13 + 2) * 0.4;
     for (let i = 0; i < spec.count; i += 1) {
       const f = flakes[i];
-      f.y -= spec.fall * f.speed * step;
-      if (f.y < -0.5) {
-        f.y = 15 + Math.random() * 3;
-        f.x = (Math.random() - 0.5) * 46;
-        f.z = -18 + Math.random() * 34;
+
+      if (f.rest > 0) {
+        // On the ground: lie flat, then sink away and respawn above.
+        f.rest += step;
+        const melt = Math.max(0, (f.rest - REST) / 1.2);
+        dummy.position.set(f.x, 0.02 - melt * 0.05, f.z);
+        dummy.rotation.set(-Math.PI / 2 * (leafy ? 0.97 : 0), f.yaw, 0);
+        dummy.scale.setScalar(f.size * Math.max(0, 1 - melt));
+        if (melt >= 1) spawn(f, false);
+      } else {
+        // Gravity, drag toward the wind, and for leaves the pendulum.
+        f.vy += -G * step;
+        f.vx += ((gust * spec.drift * 0.6) - f.vx) * DRAG * step;
+        f.vz += ((Math.cos(elapsed * 0.2 + i) * spec.drift * 0.2) - f.vz) * DRAG * step;
+        let tilt = 0;
+        if (leafy) {
+          f.swing += f.swingRate * step;
+          const sw = Math.sin(f.swing);
+          // Sideways glide that reverses each half-swing, with lift at the
+          // bottom of the arc (where the leaf is flattest to the air).
+          f.vx += Math.cos(f.swing) * 1.4 * step * spec.drift;
+          f.vy += (1 - Math.abs(sw)) * G * 0.85 * step;
+          tilt = sw * 0.9;
+        }
+        f.vy -= f.vy * DRAG * 0.5 * step;   // air resistance on the fall itself
+        f.x += f.vx * step;
+        f.y += f.vy * step;
+        f.z += f.vz * step;
+
+        if (f.y <= 0.02) {
+          f.y = 0.02;
+          f.rest = 1e-4;   // landed
+        }
+        dummy.position.set(f.x, f.y, f.z);
+        dummy.rotation.set(
+          leafy ? tilt : elapsed * f.spin * 0.3,
+          f.yaw + (leafy ? elapsed * f.spin * 0.25 : 0),
+          leafy ? tilt * 0.6 : 0,
+        );
+        dummy.scale.setScalar(f.size);
       }
-      // Leaves and petals swing as they fall; snow just wanders.
-      const swing = Math.sin(elapsed * f.speed + f.phase) * spec.drift;
-      dummy.position.set(f.x + swing, f.y, f.z + Math.cos(elapsed * 0.6 + f.phase) * spec.drift * 0.5);
-      dummy.rotation.set(elapsed * f.spin * 0.5, elapsed * f.spin, f.phase);
-      dummy.scale.setScalar(f.size);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
     }
@@ -538,10 +610,24 @@ function flowerField(zoo, r) {
   const geometry = mergeGeometries(petals);
 
   const material = new THREE.MeshToonMaterial({ color: 0xffffff });
+  // Flowers nod with the meadow wave.
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = zoo.ink.time;
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uTime;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        vec3 fw = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;
+        float roll = smoothstep(-0.3, 1.0, sin(uTime * 0.55 - fw.x * 0.32 - fw.z * 0.12));
+        float nod = sin(uTime * 1.7 + fw.x * 3.1 + fw.z * 2.3) * 0.3 + roll;
+        transformed.x += nod * 0.05 * clamp(position.y / 0.1, 0.0, 1.0);`);
+  };
+  material.customProgramCacheKey = () => 'toZooFlower';
   const count = zoo.quality.grass > 1000 ? 170 : 90;
   const mesh = new THREE.InstancedMesh(geometry, material, count);
   mesh.raycast = () => {};
   mesh.frustumCulled = false;
+  material.depthWrite = false;   // no ink outlines on tiny flowers
+  mesh.renderOrder = 4;
 
   const dummy = new THREE.Object3D();
   const tint = new THREE.Color();
@@ -650,6 +736,19 @@ export function buildSeasons(zoo, environment) {
       }));
     }
 
+    /* ---- ridges ---- */
+    if (season.ridges) {
+      const rr = rng(7331);
+      for (const row of season.ridges) {
+        const blobs = [];
+        for (let x = -110; x <= 110; x += 7 + rr() * 5) {
+          const rad = row.rad[0] + rr() * (row.rad[1] - row.rad[0]);
+          blobs.push(blob(rad, [1.6, 0.32 + rr() * 0.14, 0.7], { pos: [x, -0.6, row.z - rr() * 6] }, 10));
+        }
+        world.add(zoo.ink.draw(mergeGeometries(blobs), new THREE.Color(row.color), { shadow: false }));
+      }
+    }
+
     /* ---- trees ---- */
     const count = zoo.quality.grass > 1000 ? 26 : 14;
     const treeSpots = [];
@@ -668,18 +767,18 @@ export function buildSeasons(zoo, environment) {
     world.userData.treeSpots = treeSpots;
     world.userData.hillSpots = hasHills ? hillSpots : [];
     world.add(zoo.ink.draw(mergeGeometries(parts.trunks), tone(season.trunk), {
-      width: 0.035, shadow: false,
+      width: 0.035, shadow: false, wind: 0.006, windBase: 0.6,
     }));
     let canopyDraw = null;
     if (season.canopy && parts.canopy.length) {
       canopyDraw = zoo.ink.draw(mergeGeometries(parts.canopy), new THREE.Color(season.canopy), {
-        width: 0.05, wobble: 0.028, shadow: false,
+        width: 0.05, wobble: 0.028, shadow: false, wind: 0.018, windBase: 0.6,
       });
       world.add(canopyDraw);
     }
     if (season.canopy2 && parts.canopy2.length) {
       world.add(zoo.ink.draw(mergeGeometries(parts.canopy2), new THREE.Color(season.canopy2), {
-        width: 0.05, shadow: false,
+        width: 0.05, shadow: false, wind: 0.014, windBase: 0.6,
       }));
     }
 
@@ -707,6 +806,8 @@ export function buildSeasons(zoo, environment) {
         side: THREE.DoubleSide,
       });
       const field = new THREE.InstancedMesh(tuft, outsideMat, blades);
+      outsideMat.depthWrite = false;   // no ink on grass; see grass.js
+      field.renderOrder = 4;
       field.frustumCulled = false;
       field.raycast = () => {};
       const dummy = new THREE.Object3D();

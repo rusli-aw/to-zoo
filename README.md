@@ -39,6 +39,22 @@ Opening `index.html` by double-clicking it will *not* work: browsers block ES
 modules over `file://`. The page detects this and tells you so rather than
 spinning.
 
+## Group zoos
+
+Friends → **Start a group zoo** makes a shared zoo and copies an invite link
+(`?zoo=<id>`). Anyone who opens the link is asked to join; everyone sees the
+same animals, anyone can add a task (it shows who added it), and anyone can
+send an animal home. Your own zoo is parked and comes back when you leave.
+
+It syncs through Supabase:
+
+1. Run [`docs/group-zoo.sql`](docs/group-zoo.sql) in Supabase → SQL Editor.
+2. Put the project URL and anon key in [`js/config.js`](js/config.js).
+
+Until then it runs in **local test mode**, syncing between tabs of the same
+browser. The link is the key: ids are random and unguessable, and the
+database is only reachable through functions that need the exact id.
+
 ## Deploying it
 
 The folder *is* the deployable artifact. Drag `to-zoo/` onto Netlify, or commit
@@ -86,12 +102,14 @@ js/
 
 ### The parts worth knowing about
 
-**The look** (`zoo/inkline.js`, `zoo/geom.js`). Every solid object is a
-smooth, round shape on a shallow toon ramp — soft plush animals with blush
-cheeks, round trees and cedars, a white picket fence — with no ink lines. The
-outline hull from the sketch era is still built but switched off
-(`Ink.outlines`). Settings → Graphics offers a Retro mode that renders at a
-fixed ~380 lines and upscales with hard pixels.
+**The look** (`zoo/inkline.js`, `zoo/dusklife.js`, `css/tokens.css`). A painted
+dusk on cream paper: a sage-to-peach sky, rows of mauve ridges fading into the
+haze, an olive meadow in gouache blotches, sage trees, vines and grapes hung on
+the camera to frame the view, butterflies and a dragonfly. Soft toon shading,
+no ink lines, and a paper grain over the whole frame (in `zoo/glass.js`'s final
+pass). The interface is walnut on vintage cream, Fraunces for reading and
+uppercase Barlow Condensed for anything you press, square corners, no shadows.
+Settings → Graphics offers a Retro pixel mode.
 
 **Liquid glass** (`zoo/glass.js`). The HUD panes are glass over the live
 world. The shader is a port of

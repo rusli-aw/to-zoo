@@ -64,6 +64,10 @@ export function createPopulation(zoo, space) {
   const tmp = new THREE.Vector3();
   const paths = createPathfinder(space);
 
+  /** Night: everyone settles down. Protest poses still win. */
+  let sleeping = false;
+  const poseFor = (value) => (value <= 4 ? 'lie' : value <= 12 || sleeping ? 'sit' : 'stand');
+
   function slotFor(type, index, seed) {
     const list = SLOTS[type];
     const base = list[index % list.length];
@@ -279,7 +283,7 @@ export function createPopulation(zoo, space) {
         const value = moodOf(task);
         entry.mood = value;
         entry.stage = moodStage(value).key;
-        entry.animal.setPose(value <= 4 ? 'lie' : value <= 12 ? 'sit' : 'stand');
+        entry.animal.setPose(poseFor(value));
       }
 
       for (const [id, entry] of entries) {
@@ -303,6 +307,15 @@ export function createPopulation(zoo, space) {
     unreserve(taskId) { reserved.delete(taskId); },
 
     get(taskId) { return entries.get(taskId) ?? null; },
+
+    /** Bedtime: at night every animal sits down to sleep. */
+    setSleeping(on) {
+      if (on === sleeping) return;
+      sleeping = on;
+      for (const entry of entries.values()) {
+        if (entry.mood !== undefined) entry.animal.setPose(poseFor(entry.mood));
+      }
+    },
 
     /** Where every animal is, for the sound layer. */
     positions() {

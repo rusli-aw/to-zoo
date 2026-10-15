@@ -19,7 +19,7 @@ import { color } from './palette.js';
 import { blob, mergeGeometries, rng } from './geom.js';
 import { easeInOut, easeOut, lerp, phase, reduced, timeline } from '../ui/motion.js';
 
-const DURATION = 2600;
+const DURATION = 5200;   // half of it is the walk into the sunset
 
 /**
  * A puff of leaves. One instanced mesh, reused for every release — building a
@@ -105,7 +105,8 @@ export function createRelease(zoo, population, environment) {
   const start = new THREE.Vector3();
   const gateApproach = new THREE.Vector3(LAYOUT.gate.x, 0, LAYOUT.gate.z + 1.5);
   const gateThrough = new THREE.Vector3(LAYOUT.gate.x, 0, LAYOUT.gate.z - 2.2);
-  const out = new THREE.Vector3(LAYOUT.gate.x * 0.4, 0, LAYOUT.gate.z - 13);
+  // Into the sunset: a long walk out toward the hills, where the haze takes it.
+  const out = new THREE.Vector3(LAYOUT.gate.x * 0.4 + 3, 0, LAYOUT.gate.z - 22);
   const at = new THREE.Vector3();
 
   /**
@@ -135,39 +136,41 @@ export function createRelease(zoo, population, environment) {
     let finished = false;
 
     const handle = timeline(DURATION, (t) => {
-      /* ── 0.00–0.18  it notices you ─────────────────────────────── */
-      const notice = phase(t, 0, 0.18, easeOut);
+      /* ── 0.00–0.12  it notices you ─────────────────────────────── */
+      const notice = phase(t, 0, 0.12, easeOut);
       animal.root.rotation.y = lerp(animal.root.rotation.y, Math.PI, notice * 0.35);
 
-      /* ── 0.10–0.30  the gate swings ────────────────────────────── */
-      environment.openGate(phase(t, 0.1, 0.34, easeInOut));
+      /* ── 0.06–0.25  the gate swings ────────────────────────────── */
+      environment.openGate(phase(t, 0.06, 0.25, easeInOut));
 
-      /* ── 0.18–0.52  walk to the gate ───────────────────────────── */
-      /* ── 0.52–0.72  through it ─────────────────────────────────── */
-      /* ── 0.72–0.94  away into the wild ─────────────────────────── */
+      /* ── 0.12–0.38  walk to the gate ───────────────────────────── */
+      /* ── 0.38–0.50  through it ─────────────────────────────────── */
+      /* ── 0.50–1.00  away toward the hills, into the sunset ─────── */
       let point;
-      if (t < 0.18) {
+      if (t < 0.12) {
         point = start;
-      } else if (t < 0.52) {
-        point = at.copy(start).lerp(gateApproach, phase(t, 0.18, 0.52, easeInOut));
-      } else if (t < 0.72) {
-        point = at.copy(gateApproach).lerp(gateThrough, phase(t, 0.52, 0.72));
+      } else if (t < 0.38) {
+        point = at.copy(start).lerp(gateApproach, phase(t, 0.12, 0.38, easeInOut));
+      } else if (t < 0.5) {
+        point = at.copy(gateApproach).lerp(gateThrough, phase(t, 0.38, 0.5));
       } else {
-        point = at.copy(gateThrough).lerp(out, phase(t, 0.72, 0.94, easeOut));
+        point = at.copy(gateThrough).lerp(out, phase(t, 0.5, 1, (x) => x));
       }
       animal.root.position.x = point.x;
       animal.root.position.z = point.z;
 
       // Face the way it is going, except while it is looking back at you.
-      if (t > 0.18) animal.root.rotation.y = Math.PI;
-      animal.setWalking(t > 0.18 && t < 0.94 ? 1 : 0);
+      if (t > 0.12) animal.root.rotation.y = Math.PI;
+      animal.setWalking(t > 0.12 ? 1 : 0);
+      // Facing the hills, a touch off straight so it ambles rather than marches.
+      if (t > 0.5) animal.root.rotation.y = Math.PI - 0.1;
 
-      /* ── 0.80–1.00  the drawing shrinks into the distance ──────── */
-      const fade = phase(t, 0.8, 1, easeInOut);
-      animal.root.scale.setScalar(baseScale * (1 - fade));
+      /* ── 0.60–1.00  it grows small and dissolves into the haze ─── */
+      const fade = phase(t, 0.6, 1, easeInOut);
+      animal.root.scale.setScalar(baseScale * (1 - fade * 0.85) * (t >= 1 ? 0 : 1));
 
       /* ── the moment it is through: leaves, and the tokens fly ──── */
-      if (!exitFired && t >= 0.72) {
+      if (!exitFired && t >= 0.5) {
         exitFired = true;
         animal.anchor(at);
         leaves.fire(at);

@@ -96,7 +96,16 @@ export function buildGrass(zoo) {
          // Two unrelated frequencies so the field never pulses in unison.
          float sway = sin(uTime * 1.6 + p) * 0.6 + sin(uTime * 2.9 + p * 2.1) * 0.4;
          transformed.x += sway * uWind * bend;
-         transformed.z += cos(uTime * 1.3 + p * 1.7) * uWind * 0.45 * bend;`,
+         transformed.z += cos(uTime * 1.3 + p * 1.7) * uWind * 0.45 * bend;
+         // The meadow breathing: one slow wave rolling across the field,
+         // the same wave the trees and flowers lean with (see inkline.js).
+         #ifdef USE_INSTANCING
+           vec3 wpos = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;
+         #else
+           vec3 wpos = (modelMatrix * vec4(position, 1.0)).xyz;
+         #endif
+         float roll = smoothstep(-0.3, 1.0, sin(uTime * 0.55 - wpos.x * 0.32 - wpos.z * 0.12));
+         transformed.x += roll * uWind * 2.4 * bend;`,
       );
   };
   material.customProgramCacheKey = () => 'toZooGrass';
@@ -105,6 +114,10 @@ export function buildGrass(zoo) {
   mesh.frustumCulled = false;
   mesh.castShadow = false;
   mesh.receiveShadow = false;
+  // Drawn last and without writing depth, so the painted pass (glass.js)
+  // never sees the blades and does not ink a thousand tiny outlines.
+  material.depthWrite = false;
+  mesh.renderOrder = 4;
   // Ground cover must never intercept a click meant for an animal.
   mesh.raycast = () => {};
 
@@ -144,6 +157,10 @@ export function buildGrass(zoo) {
 
   return {
     mesh,
+
+    /** Sand and snow seasons have no lawn; the blades disappear with it. */
+    setVisible(on) { mesh.visible = on; },
+
     /** The ceiling, exported so anything else planting on the ground can obey it. */
     maxHeight: MAX_HEIGHT,
 

@@ -81,6 +81,11 @@ export class ZooScene {
     this.pointerTarget = new THREE.Vector2(0, 0);
     this.parallax = 1;
 
+    /** A scripted camera shot, set by direct(); null for the normal rig. */
+    this.director = null;
+    /** A timed camera flight in progress, set by fly(). */
+    this.flight = null;
+
     /** Set once zoo/daylight.js takes over sky, fog and lights. */
     this.ownsLighting = false;
 
@@ -242,6 +247,54 @@ export class ZooScene {
     this.focusTarget = 1;
   }
 
+  /**
+   * Take the camera off its resting shot and fly it to a scripted one — the
+   * intro uses this to stand outside the gate and walk in. The flight is the
+   * same frame-rate-independent damping the focus pull uses, so a new shot
+   * mid-flight simply bends the path toward it. Pass null to hand back.
+   *
+   * @param {THREE.Vector3 | null} cam
+   * @param {THREE.Vector3} [look]
+   * @param {number} [speed]  damping rate; higher arrives sooner
+   */
+  direct(cam, look, speed = 1.6) {
+    this.director = cam ? { cam: cam.clone(), look: look.clone(), speed } : null;
+  }
+
+  /**
+   * A smooth, timed camera flight: eased in and out along a curve through the
+   * given points, with the look target riding its own curve. Unlike direct(),
+   * which chases a target and so starts every move at full speed, this
+   * starts and stops gently. The last point is held afterwards.
+   *
+   * @param {THREE.Vector3[]} points   positions, ending at the destination
+   * @param {THREE.Vector3[]} looks    look targets, same length
+   * @param {number} [duration]        seconds
+   * @param {() => void} [onDone]
+   */
+  fly(points, looks, duration = 1.8, onDone = null) {
+    const pos = new THREE.CatmullRomCurve3([this.camera.position.clone(), ...points.map((p) => p.clone())]);
+    const look = new THREE.CatmullRomCurve3([this._look.clone(), ...looks.map((p) => p.clone())]);
+    pos.curveType = look.curveType = 'centripetal';
+    this.flight = { pos, look, t: 0, duration: this.reduced ? 0 : duration, onDone };
+    this.director = { cam: points[points.length - 1].clone(), look: looks[looks.length - 1].clone(), speed: 2 };
+  }
+
+  /** Fly back to the resting shot and hand the camera back to the rig. */
+  flyHome(duration = 1.8, onDone = null) {
+    this.fly([this.camBase], [this.lookBase], duration, () => {
+      this.director = null;
+      onDone?.();
+    });
+  }
+
+  /** Jump straight to a shot with no flight, e.g. before the first frame. */
+  cutTo(cam, look) {
+    this.camera.position.copy(cam);
+    this._look.copy(look);
+    this.camera.lookAt(this._look);
+  }
+
   /** Screen position of a world point, in CSS pixels relative to the canvas. */
   screenPosition(worldPoint, out = { x: 0, y: 0, visible: true }) {
     this._tmp.copy(worldPoint).project(this.camera);
@@ -347,18 +400,48 @@ export class ZooScene {
 
     this._desired.copy(this.camBase).lerp(this.camFocus, this.focusAmount);
     this._desiredLook.copy(this.lookBase).lerp(this.lookFocus, this.focusAmount);
+    let camRate = 3.6;
+    let lookRate = 4.2;
+    let sway = this.parallax;
+    if (this.flight) {
+      const f = this.flight;
+      f.t += dt;
+      const u = f.duration > 0 ? Math.min(1, f.t / f.duration) : 1;
+      const e = u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2;   // ease in-out
+      f.pos.getPointAt(e, this._desired);
+      f.look.getPointAt(e, this._desiredLook);
+      this.camera.position.copy(this._desired);
+      this._look.copy(this._desiredLook);
+      this.camera.lookAt(this._look);
+      if (u >= 1) {
+        this.flight = null;
+        f.onDone?.();
+      }
+      for (const fn of this.updaters) fn(dt, this.elapsed);
+      if (this.glass) this.glass.render(this.scene, this.camera);
+      else this.renderer.render(this.scene, this.camera);
+      return;
+    } else if (this.director) {
+      this._desired.copy(this.director.cam);
+      this._desiredLook.copy(this.director.look);
+      camRate = this.director.speed;
+      lookRate = this.director.speed * 1.25;
+      sway *= 0.25;   // a scripted shot should barely drift
+    }
 
-    if (this.parallax > 0) {
+    if (sway > 0) {
       // Slow idle breathing, plus a lean toward the pointer. Both are small:
       // the world should feel handheld, not motion-sick.
       const drift = Math.sin(this.elapsed * 0.16) * 0.5;
       const bob = Math.sin(this.elapsed * 0.23 + 1.1) * 0.16;
-      this._desired.x += (drift + this.pointer.x * 1.35) * this.parallax;
-      this._desired.y += (bob - this.pointer.y * 0.55) * this.parallax;
+      this._desired.x += (drift + this.pointer.x * 1.35) * sway;
+      this._desired.y += (bob - this.pointer.y * 0.55) * sway;
     }
 
-    this.camera.position.lerp(this._desired, damp(3.6));
-    this._look.lerp(this._desiredLook, damp(4.2));
+    // Reduced motion cuts rather than flies.
+    const instant = this.reduced && this.director;
+    this.camera.position.lerp(this._desired, instant ? 1 : damp(camRate));
+    this._look.lerp(this._desiredLook, instant ? 1 : damp(lookRate));
     this.camera.lookAt(this._look);
 
     for (const fn of this.updaters) fn(dt, this.elapsed);

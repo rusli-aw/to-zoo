@@ -16,6 +16,7 @@ import {
 import { confirmDialog } from './dialog.js';
 import { toast } from './toast.js';
 import { AVATAR_SWATCHES, avatarMark, glyph } from './icons.js';
+import { portraitOf } from '../zoo/portraits.js';
 
 const AVATARS = ['default', ...AVATAR_SWATCHES];
 
@@ -108,6 +109,20 @@ export function renderProfileView(root, ctx) {
     </section>
 
     <section class="panel-block">
+      <h3 class="block-title">Keepsake journal</h3>
+      ${done.length === 0
+        ? '<p class="block-note">Every animal you send home leaves a stamp here.</p>'
+        : `<ul class="journal">
+            ${[...done].sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0)).slice(0, 30).map((t) => `
+              <li class="stamp" title="${escapeAttr(t.title)}">
+                <img class="stamp__art" src="${portraitOf(t.animalType)}" alt="">
+                <span class="stamp__title">${escapeAttr(t.title)}</span>
+                <span class="stamp__date">${t.completedAt ? new Date(t.completedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}</span>
+              </li>`).join('')}
+          </ul>`}
+    </section>
+
+    <section class="panel-block">
       <h3 class="block-title">Achievements</h3>
       <ul class="badges">
         ${list.map((a) => `
@@ -123,13 +138,13 @@ export function renderProfileView(root, ctx) {
       <h3 class="block-title">Settings</h3>
 
       <div class="setting">
-        <div><b>Time of day</b><span>Auto follows your real clock. Day and Night pin the zoo.</span></div>
-        <div class="segmented" role="radiogroup" aria-label="Time of day">
-          ${['system', 'light', 'dark'].map((v) => `
+        <div><b>Light</b><span>Follow drifts from morning to golden hour with your clock. Midday holds it.</span></div>
+        <div class="segmented" role="radiogroup" aria-label="Light">
+          ${['system', 'light'].map((v) => `
             <button type="button" role="radio" data-theme-opt="${v}"
-                    aria-checked="${state.settings.theme === v}"
-                    class="${state.settings.theme === v ? 'is-on' : ''}">${
-                      v === 'system' ? 'Auto' : v === 'light' ? 'Day' : 'Night'}</button>`).join('')}
+                    aria-checked="${(state.settings.theme === 'dark' ? 'system' : state.settings.theme) === v}"
+                    class="${(state.settings.theme === 'dark' ? 'system' : state.settings.theme) === v ? 'is-on' : ''}">${
+                      v === 'system' ? 'Follow' : 'Midday'}</button>`).join('')}
         </div>
       </div>
 
@@ -171,6 +186,7 @@ export function renderProfileView(root, ctx) {
           ${state.tasks.length === 0
             ? '<button class="btn btn--quiet btn--sm" type="button" data-demo>Load a demo zoo</button>'
             : '<button class="btn btn--quiet btn--sm" type="button" data-clear>Clear all tasks</button>'}
+          <button class="btn btn--quiet btn--sm" type="button" data-intro>Replay intro</button>
           <button class="btn btn--danger btn--sm" type="button" data-reset>Reset everything</button>
         </div>
       </div>
@@ -215,6 +231,11 @@ export function renderProfileView(root, ctx) {
       window.dispatchEvent(new CustomEvent('to-zoo:preferences'));
     });
   }
+
+  root.querySelector('[data-intro]')?.addEventListener('click', () => {
+    ctx.views.show('zoo');
+    window.dispatchEvent(new CustomEvent('to-zoo:intro'));
+  });
 
   root.querySelector('[data-demo]')?.addEventListener('click', () => {
     loadDemo();

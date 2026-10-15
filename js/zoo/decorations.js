@@ -300,6 +300,17 @@ const BUILDERS = {
   flowerCrowns() { return { parts: [] }; },
 };
 
+/** The geometry for a shop item, for thumbnails. Cosmetics included. */
+export function itemPieces(build) {
+  if (BUILDERS[build]) {
+    const spec = BUILDERS[build]();
+    if (spec?.parts?.length) return spec;
+  }
+  const cosmetic = cosmeticGeometry(build);
+  if (cosmetic?.parts?.length) return { ...cosmetic, cosmetic: true };
+  return null;
+}
+
 /** Shared tree builder for the acacia grove and the fever trees. */
 function trees(count, height, spread, seed) {
   const trunks = [];

@@ -72,6 +72,10 @@ function blank() {
     },
     onboarded: false,
     lastSeen: Date.now(),
+    /** The group zoo you are in, {id, name}, or null for your own zoo. */
+    group: null,
+    /** Your own tasks, parked while you are in a group zoo. */
+    personalTasks: null,
   };
 }
 
@@ -246,7 +250,8 @@ export function placedItems(s = state) {
 
 /** @returns {Task} the created task, so the caller can focus its animal */
 export function addTask(input) {
-  const task = makeTask({ ...input, order: Date.now() });
+  const by = state.group ? { name: state.user.name, avatar: state.user.avatar } : null;
+  const task = makeTask({ ...input, order: Date.now(), by });
   commit({ type: 'task:add', task }, (s) => ({ ...s, tasks: [...s.tasks, task] }));
   return task;
 }
@@ -257,7 +262,7 @@ export function updateTask(id, patch) {
     ...s,
     tasks: s.tasks.map((t) => {
       if (t.id !== id) return t;
-      updated = { ...t, ...patch, id: t.id };
+      updated = { ...t, ...patch, id: t.id, updatedAt: Date.now() };
       return updated;
     }),
   }));
@@ -289,7 +294,7 @@ export function completeTask(id, now = Date.now()) {
 
   const moodBefore = zooMood(state.tasks, now);
   const wasOverdue = isOverdue(task, now);
-  const done = { ...task, completed: true, completedAt: now };
+  const done = { ...task, completed: true, completedAt: now, updatedAt: now };
   const tasksAfter = state.tasks.map((t) => (t.id === id ? done : t));
 
   // Streak first, so the reward can quote the streak the user just extended.
@@ -330,7 +335,7 @@ export function completeTask(id, now = Date.now()) {
 export function uncompleteTask(id) {
   const task = taskById(id);
   if (!task || !task.completed) return null;
-  const restored = { ...task, completed: false, completedAt: null };
+  const restored = { ...task, completed: false, completedAt: null, updatedAt: Date.now() };
   commit({ type: 'task:uncomplete', task: restored }, (s) => ({
     ...s,
     tasks: s.tasks.map((t) => (t.id === id ? restored : t)),
@@ -564,6 +569,46 @@ export function resetEverything() {
   } catch { /* nothing to do if storage is unavailable */ }
   state = blank();
   for (const fn of listeners) fn(state, { type: 'reset' });
+}
+
+/* ---------------------------------------------------------- group zoo --- */
+
+/**
+ * Step into a group zoo. Your own list is parked, untouched, and the group's
+ * tasks take its place, so every view and the 3D world work unchanged.
+ */
+export function enterGroup(group, tasks = []) {
+  commit({ type: 'group:enter', group }, (s) => ({
+    ...s,
+    personalTasks: s.group ? s.personalTasks : s.tasks,
+    group: { id: group.id, name: group.name },
+    tasks: tasks.map(makeTask),
+  }));
+}
+
+/** Back to your own zoo, exactly as you left it. */
+export function leaveGroup() {
+  commit({ type: 'group:leave' }, (s) => ({
+    ...s,
+    group: null,
+    tasks: s.personalTasks ?? s.tasks.filter((t) => !t.by),
+    personalTasks: null,
+  }));
+}
+
+/**
+ * The group's tasks changed somewhere else. Newest edit wins per task; a
+ * task missing from the remote list was deleted by someone.
+ */
+export function applyRemoteTasks(remote) {
+  commit({ type: 'remote' }, (s) => {
+    const mine = new Map(s.tasks.map((t) => [t.id, t]));
+    const tasks = remote.map((r) => {
+      const local = mine.get(r.id);
+      return local && (local.updatedAt ?? 0) > (r.updatedAt ?? 0) ? local : makeTask(r);
+    });
+    return { ...s, tasks };
+  });
 }
 
 /* ------------------------------------------------------ share snapshot --- */

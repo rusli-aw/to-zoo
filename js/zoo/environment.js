@@ -12,7 +12,7 @@
 
 import * as THREE from 'three';
 import { color, mixTokens } from './palette.js';
-import { grassTexture, stoneTexture } from './textures.js';
+import { paintTexture, stoneTexture } from './textures.js';
 import { blob, box, cone, cyl, mergeGeometries, place, plane, rng } from './geom.js';
 
 /** Shared world layout. Anything that needs to know where the zoo ends asks here. */
@@ -76,10 +76,11 @@ export function buildEnvironment(zoo, space = null) {
   scene.add(group);
 
   // Pixel-crisp patterns, nearest-filtered: the retro handheld look.
-  const wildTex = grassTexture(1);
-  wildTex.repeat.set(70, 70);
-  const zooTex = grassTexture(2);
-  zooTex.repeat.set(7, 6);
+  // Gouache: soft blotches of tone on the meadow, like paint on paper.
+  const wildTex = paintTexture(1);
+  wildTex.repeat.set(16, 16);
+  const zooTex = paintTexture(2);
+  zooTex.repeat.set(2.5, 2);
   const stones = stoneTexture();
 
   /* ------------------------------------------------------------ sky ---- */
@@ -145,8 +146,12 @@ export function buildEnvironment(zoo, space = null) {
 
         // Altitude: horizon colour gives way to the zenith quickly, the way
         // scattered light does, so most of the visible sky is properly blue.
-        float up = 1.0 - exp(-max(h, 0.0) * 4.5);
-        vec3 sky = mix(uHorizon, uZenith, up);
+        // A long painted gradient: peach at the horizon, through a dusty
+        // rose band, to sage-teal overhead — the whole sky is the gradient.
+        // Tuned so the top of the frame (about 15 degrees up) is already sage.
+        float up = 1.0 - exp(-max(h, 0.0) * 9.0);
+        vec3 rose = mix(uHorizon, vec3(0.91, 0.74, 0.70), 0.55 * (1.0 - uNight));
+        vec3 sky = up < 0.32 ? mix(uHorizon, rose, up / 0.32) : mix(rose, uZenith, smoothstep(0.32, 0.85, up));
 
         // A pale haze band sitting on the horizon.
         float haze = exp(-abs(h) * 18.0) * (1.0 - uNight * 0.8);
@@ -162,7 +167,8 @@ export function buildEnvironment(zoo, space = null) {
         float toward = max(mu, 0.0);
         // The last term is a tight bloom hugging the disc, so the disc sits in
         // its own light instead of reading as a pale ring on a pale sky.
-        float halo = pow(toward, 6.0) * 0.08 + pow(toward, 90.0) * 0.16 + pow(toward, 3000.0) * 0.6;
+        // Painted, not photographed: a broad warm glow and no hard disc.
+        float halo = pow(toward, 5.0) * 0.12 + pow(toward, 60.0) * 0.12;
         sky += uSunColor * halo * uSunI;
 
         float low = (1.0 - smoothstep(0.02, 0.2, sunDir.y)) * uSunI;
@@ -174,21 +180,21 @@ export function buildEnvironment(zoo, space = null) {
         float edge = smoothstep(SUN_COS - 0.00007, SUN_COS + 0.00005, mu);
         vec3 disc = mix(vec3(1.0, 0.98, 0.9), uSunColor, 0.3) * 1.3;
         // Only above the horizon; below it the ground and sea take over.
-        sky = mix(sky, disc, edge * uSunI * smoothstep(-0.004, 0.006, h));
+        sky = mix(sky, disc, edge * uSunI * smoothstep(-0.004, 0.006, h) * 0.0);
 
         // Clouds: big soft cumulus, fluffy-edged, with a faintly warm body
         // and a gentle lavender-blue underside. Slow, and not too many.
         if (h > 0.0) {
-          vec2 layer = dir.xz / (h + 0.12) * 0.7 + vec2(uTime * 0.005, uTime * 0.002);
+          vec2 layer = dir.xz / (h + 0.12) * 0.7 + vec2(uTime * 0.03, uTime * 0.008);
           float n = fbm(layer * 0.4);
-          float edge = smoothstep(0.52, 0.66, n) * smoothstep(0.02, 0.14, h);
+          float edge = smoothstep(0.56, 0.74, n) * smoothstep(0.02, 0.12, h) * 0.6;
           float below = fbm((layer + vec2(0.0, 0.16)) * 0.4);
           float lit = smoothstep(0.5, 0.7, below);
           vec3 white = mix(vec3(1.0, 0.99, 0.97), uSunColor, 0.2);
           vec3 belly = mix(white, mix(uZenith, vec3(0.86, 0.82, 0.95), 0.5), 0.3);
           vec3 cloud = mix(belly, white, lit);
           cloud *= mix(0.22, 1.0, clamp(uAmbient / 0.62, 0.0, 1.0));
-          sky = mix(sky, cloud, edge * 0.92);
+          sky = mix(sky, cloud, edge * 0.92 * (1.0 - uNight * 0.75));
         }
 
         // Dither, so a gradient this smooth does not band on an 8-bit screen.
@@ -296,6 +302,58 @@ export function buildEnvironment(zoo, space = null) {
   ]);
   gate.add(ink.draw(signGeo, color('bark').clone(), { width: 0.026 }));
 
+  // The sign's lettering, painted on both faces so it reads from inside the
+  // zoo and from the walk-in outside the gate.
+  const signCanvas = document.createElement('canvas');
+  signCanvas.width = 512;
+  signCanvas.height = 150;
+  const signTex = new THREE.CanvasTexture(signCanvas);
+  signTex.colorSpace = THREE.SRGBColorSpace;
+  signTex.anisotropy = 4;
+  const signMat = new THREE.MeshToonMaterial({ map: signTex });
+  const signFront = new THREE.Mesh(new THREE.PlaneGeometry(1.22, 0.32), signMat);
+  signFront.position.set(0, 1.98, 0.185);
+  const signBack = signFront.clone();
+  signBack.position.z = 0.095;
+  signBack.rotation.y = Math.PI;
+  gate.add(signFront, signBack);
+  let signText = null;
+
+  function paintSign(text) {
+    if (text === signText) return;
+    signText = text;
+    const ctx = signCanvas.getContext('2d');
+    if (!ctx) return;
+    const w = signCanvas.width;
+    const h = signCanvas.height;
+    ctx.fillStyle = '#6b4a2e';
+    ctx.fillRect(0, 0, w, h);
+    // Painted wood grain, a few soft streaks.
+    for (let i = 0; i < 14; i += 1) {
+      ctx.fillStyle = `rgba(${i % 2 ? '40,25,12' : '150,110,70'},0.08)`;
+      ctx.fillRect(0, (i / 14) * h + Math.sin(i) * 4, w, 3 + (i % 3));
+    }
+    ctx.strokeStyle = 'rgba(241, 230, 212, 0.55)';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(12, 12, w - 24, h - 24);
+    ctx.fillStyle = '#f1e6d4';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    let size = 70;
+    const font = (px) => `800 ${px}px "Nunito", ui-rounded, system-ui, sans-serif`;
+    ctx.font = font(size);
+    while (ctx.measureText(text).width > w - 70 && size > 28) ctx.font = font(size -= 4);
+    ctx.fillText(text, w / 2, h / 2 + 3);
+    signTex.needsUpdate = true;
+  }
+  paintSign('My Zoo');
+  // The sign is drawn before the web font may have arrived; redraw once it has.
+  document.fonts?.ready.then(() => {
+    const text = signText;
+    signText = null;
+    paintSign(text);
+  });
+
   /** Two doors on their own pivots, so `openGate` can swing them outward. */
   const doorGeoFor = (dir) => mergeGeometries([
     box(LAYOUT.gate.width / 2, 0.1, 0.07, { pos: [(dir * LAYOUT.gate.width) / 4, 1.4, 0] }),
@@ -345,7 +403,7 @@ export function buildEnvironment(zoo, space = null) {
     group.add(ink.draw(mergeGeometries(rockParts), color('stone-deep').clone(), { width: 0.02 }));
   }
   const bushes = bushParts.length
-    ? ink.draw(mergeGeometries(bushParts), color('grass-deep').clone(), { width: 0.025, wobble: 0.02 })
+    ? ink.draw(mergeGeometries(bushParts), color('grass-deep').clone(), { width: 0.025, wobble: 0.02, wind: 0.03, windBase: 0.1 })
     : null;
   if (bushes) group.add(bushes);
 
@@ -448,5 +506,8 @@ export function buildEnvironment(zoo, space = null) {
     applyTheme() {
       applyGround();
     },
+
+    /** What the gate sign says, e.g. "Audrey's Zoo". */
+    setSign(text) { paintSign(text); },
   };
 }

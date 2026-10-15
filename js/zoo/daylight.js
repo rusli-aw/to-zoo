@@ -35,10 +35,7 @@ export const localHours = (now = Date.now()) => {
  * Exported as a plain function because main.js has to resolve the interface
  * theme during boot, before the scene — and therefore the daylight — exists.
  */
-export const clockIsNight = (now = Date.now()) => {
-  const h = localHours(now);
-  return h < SUNRISE + 0.4 || h > SUNSET - 0.4;
-};
+export const clockIsNight = () => false;   // there is no night any more
 
 /**
  * The vendored three.js (r169) uses physically correct lights: a Lambert
@@ -61,50 +58,87 @@ const LIGHT_SCALE = Math.PI;
  * flanks are what read as gloom, and the bounce is the only thing that
  * reaches them.
  */
-const KEYS = [
-  {
-    at: -1.0, name: 'night',
-    // The sky stays dark enough for the stars. What lights the zoo is the
-    // moon and a blue bounce, not the sky.
-    sky: ['#0d1530', '#24305a'], sun: '#2a3450', sunI: 0.0,
-    hemiSky: '#5a70a0', hemiGround: '#3a4658', hemiI: 0.36,
-    fill: '#2b3450', fillI: 0.0, stars: 1,
-    moon: '#c4d6f4', moonI: 0.24,
-  },
+/*
+ * Two sets of keyframes, because morning and evening share a sun height but
+ * not a mood: the day drifts from cream at dawn, to apricot at midday, to
+ * lilac in the evening and indigo at night. Each set is lerped by elevation
+ * as before; the two are then blended by the clock (AM before late morning,
+ * PM after early afternoon). Noon and night are identical in both sets, so
+ * the blend has no seam at midday or midnight.
+ */
+const NIGHT = {
+  at: -1.0, name: 'night',
+  sky: ['#141a3a', '#2c2c58'], sun: '#2a3450', sunI: 0.0,
+  hemiSky: '#5a62a0', hemiGround: '#3a3a58', hemiI: 0.36,
+  fill: '#2b3450', fillI: 0.0, stars: 1,
+  moon: '#c4d6f4', moonI: 0.24,
+};
+const NOON = {
+  at: 1.0, name: 'noon',
+  sky: ['#a9c6c4', '#f3c9a0'], sun: '#ffe2c0', sunI: 0.44,
+  hemiSky: '#f2dccb', hemiGround: '#9a8f86', hemiI: 0.72,
+  fill: '#e8d6dc', fillI: 0.12, stars: 0,
+  moon: '#c4d6f4', moonI: 0,
+};
+
+const KEYS_AM = [
+  NIGHT,
   {
     at: -0.06, name: 'twilight',
-    sky: ['#2a3c66', '#7a5a78'], sun: '#a86a78', sunI: 0.05,
-    hemiSky: '#6272a0', hemiGround: '#4a4452', hemiI: 0.4,
-    fill: '#6a7aa6', fillI: 0.06, stars: 0.6,
-    moon: '#c4d6f4', moonI: 0.12,
+    sky: ['#4e5a8a', '#c7a2b4'], sun: '#c08a98', sunI: 0.05,
+    hemiSky: '#8a8ab0', hemiGround: '#5a5068', hemiI: 0.42,
+    fill: '#8a8ab0', fillI: 0.06, stars: 0.5,
+    moon: '#c4d6f4', moonI: 0.1,
   },
   {
-    at: 0.05, name: 'golden',
-    sky: ['#6fa6e0', '#ffc690'], sun: '#ffc27a', sunI: 0.4,
-    hemiSky: '#c8d4ee', hemiGround: '#a8b878', hemiI: 0.54,
-    fill: '#bcd0ea', fillI: 0.1, stars: 0.12,
+    at: 0.06, name: 'golden',
+    sky: ['#b8ccd0', '#f6dcc0'], sun: '#ffd8b0', sunI: 0.34,
+    hemiSky: '#f0e2d6', hemiGround: '#9a8e88', hemiI: 0.6,
+    fill: '#dcd6e0', fillI: 0.1, stars: 0.08,
     moon: '#c4d6f4', moonI: 0.02,
   },
   {
-    at: 0.3, name: 'morning',
-    // Clear morning blue overhead, a soft warm rim at the horizon.
-    sky: ['#5fb2ee', '#e8f2f4'], sun: '#fff0d4', sunI: 0.48,
-    hemiSky: '#e0eef8', hemiGround: '#b0d088', hemiI: 0.68,
-    fill: '#c8dcee', fillI: 0.13, stars: 0,
+    at: 0.32, name: 'morning',
+    // Cream: the softest light of the day.
+    sky: ['#c3d6d2', '#f7ead4'], sun: '#fff0d8', sunI: 0.42,
+    hemiSky: '#f6ecdf', hemiGround: '#a09a8c', hemiI: 0.72,
+    fill: '#e6e0e4', fillI: 0.12, stars: 0,
     moon: '#c4d6f4', moonI: 0,
+  },
+  NOON,
+];
+
+const KEYS_PM = [
+  NIGHT,
+  {
+    at: -0.06, name: 'twilight',
+    // Indigo coming down over a last lilac rim.
+    sky: ['#3c4278', '#a682a8'], sun: '#a86a90', sunI: 0.05,
+    hemiSky: '#7470a8', hemiGround: '#4e4462', hemiI: 0.4,
+    fill: '#7a74b0', fillI: 0.06, stars: 0.6,
+    moon: '#c4d6f4', moonI: 0.12,
   },
   {
-    at: 1.0, name: 'noon',
-    sky: ['#54aef0', '#e2f2fb'], sun: '#fff6e4', sunI: 0.5,
-    hemiSky: '#e4f1fa', hemiGround: '#b4d68c', hemiI: 0.72,
-    fill: '#d0e4f2', fillI: 0.14, stars: 0,
+    at: 0.06, name: 'golden',
+    // Lilac overhead, apricot fire at the horizon.
+    sky: ['#a99cc4', '#f2a07a'], sun: '#ffb080', sunI: 0.4,
+    hemiSky: '#e6c6cc', hemiGround: '#8e7a86', hemiI: 0.58,
+    fill: '#c8b4d8', fillI: 0.12, stars: 0.1,
+    moon: '#c4d6f4', moonI: 0.02,
+  },
+  {
+    at: 0.32, name: 'afternoon',
+    sky: ['#a9c0c4', '#f2bf98'], sun: '#ffd8b4', sunI: 0.44,
+    hemiSky: '#f0d6c8', hemiGround: '#968a86', hemiI: 0.7,
+    fill: '#e2d0da', fillI: 0.12, stars: 0,
     moon: '#c4d6f4', moonI: 0,
   },
+  NOON,
 ];
 
 const _c2 = new THREE.Color();
 
-function lerpKeys(elevation) {
+function lerpKeys(elevation, KEYS) {
   let a = KEYS[0];
   let b = KEYS[KEYS.length - 1];
   for (let i = 0; i < KEYS.length - 1; i += 1) {
@@ -126,6 +160,41 @@ function lerpKeys(elevation) {
 
 const mix = (ca, cb, t, out) => out.set(ca).lerp(_c2.set(cb), t);
 const num = (na, nb, t) => na + (nb - na) * t;
+
+/**
+ * One moment of light: the AM and PM sets sampled at this elevation and
+ * blended by the clock. Returns a key-shaped object with hex strings, so the
+ * rest of apply() reads exactly as it did with a single set.
+ */
+const _ca = new THREE.Color();
+const _cb = new THREE.Color();
+function sampleKeys(elevation, hours) {
+  const pm = THREE.MathUtils.smoothstep(hours, 11, 15) * (hours < 3 ? 0 : 1);
+  const one = (set) => {
+    const { a, b, t } = lerpKeys(elevation, set);
+    const c = (ka, kb) => '#' + _ca.set(ka).lerp(_cb.set(kb), t).getHexString();
+    return {
+      name: b.name,
+      sky: [c(a.sky[0], b.sky[0]), c(a.sky[1], b.sky[1])],
+      sun: c(a.sun, b.sun), hemiSky: c(a.hemiSky, b.hemiSky), hemiGround: c(a.hemiGround, b.hemiGround),
+      fill: c(a.fill, b.fill),
+      sunI: num(a.sunI, b.sunI, t), hemiI: num(a.hemiI, b.hemiI, t), fillI: num(a.fillI, b.fillI, t),
+      stars: num(a.stars, b.stars, t), moonI: num(a.moonI ?? 0, b.moonI ?? 0, t),
+    };
+  };
+  const am = one(KEYS_AM);
+  const p = one(KEYS_PM);
+  const c = (x, y) => '#' + _ca.set(x).lerp(_cb.set(y), pm).getHexString();
+  return {
+    at: elevation,
+    name: pm > 0.5 ? p.name : am.name,
+    sky: [c(am.sky[0], p.sky[0]), c(am.sky[1], p.sky[1])],
+    sun: c(am.sun, p.sun), hemiSky: c(am.hemiSky, p.hemiSky), hemiGround: c(am.hemiGround, p.hemiGround),
+    fill: c(am.fill, p.fill),
+    sunI: num(am.sunI, p.sunI, pm), hemiI: num(am.hemiI, p.hemiI, pm), fillI: num(am.fillI, p.fillI, pm),
+    stars: num(am.stars, p.stars, pm), moonI: num(am.moonI, p.moonI, pm),
+  };
+}
 
 /**
  * @param {import('./scene.js').ZooScene} zoo
@@ -229,11 +298,22 @@ export function createDaylight(zoo, environment) {
   let current = { elevation: 1, phase: 'noon', night: 0 };
   const listeners = new Set();
 
+  /**
+   * No night in this zoo. The real clock still drives the light, but it is
+   * folded into daylight: the small hours read as early morning, and the
+   * evening stops at a lilac golden hour rather than going dark.
+   */
+  const DAY_START = 7.5;
+  const DAY_END = 17.6;
+  function toDaylight(h) {
+    if (h >= DAY_START && h <= DAY_END) return h;
+    // Night maps back onto morning light, so it is never dark.
+    return h > DAY_END ? DAY_END : DAY_START + (h / DAY_START) * 0.5;
+  }
   function hoursNow(now = Date.now()) {
     if (mode === 'day') return PINNED.day;
-    if (mode === 'night') return PINNED.night;
-    if (override !== null) return override;
-    return localHours(now);
+    if (override !== null) return toDaylight(override);
+    return toDaylight(localHours(now));
   }
 
   /**
@@ -277,7 +357,10 @@ export function createDaylight(zoo, environment) {
 
   function apply(hours) {
     const elevation = elevationAt(hours);
-    const { a, b, t } = lerpKeys(elevation);
+    // Already blended; a and b are the same key, so t is irrelevant.
+    const a = sampleKeys(elevation, hours);
+    const b = a;
+    const t = 0;
 
     mix(a.sky[0], b.sky[0], t, skyTop);
     mix(a.sky[1], b.sky[1], t, skyBottom);

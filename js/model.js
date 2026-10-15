@@ -462,6 +462,9 @@ export function makeTask(input = {}) {
     completedAt: input.completedAt ?? null,
     reminder: input.reminder ?? false,
     order: input.order ?? now,
+    /** Group zoos: who added it ({name, avatar}), and when it last changed. */
+    by: input.by ?? null,
+    updatedAt: input.updatedAt ?? now,
   };
 }
 
