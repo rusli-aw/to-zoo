@@ -65,6 +65,8 @@ const ICONS = {
   butterfly: `<path d="M12 8v11"/><path d="M12 11C9 5 3 5 4 10c1 4 5 3 8 1zM12 11c3-6 9-6 8-1-1 4-5 3-8 1zM12 13c-3 0-6 2-5 5 1 2 4 0 5-3zM12 13c3 0 6 2 5 5-1 2-4 0-5-3z"/>`,
 
   dot: `<circle cx="12" cy="12" r="3"/>`,
+  soundOn: `<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>`,
+  soundOff: `<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>`,
 };
 
 /** Every emoji the app has ever shown, and the icon that replaces it. */

@@ -68,7 +68,7 @@ function blank() {
       graphics: 'smooth',      // smooth | retro
       skipRelease: false,      // remember the user's choice to skip the animation
       upkeepNotices: true,
-      sound: false,
+      sound: true,             // starts on the first click (browser rule)
     },
     onboarded: false,
     lastSeen: Date.now(),
@@ -95,6 +95,12 @@ function migrate(parsed, base) {
     parsed.tasks = parsed.tasks.map((t) => (
       t?.animalType === 'sheep' ? { ...t, animalType: 'rabbit' } : t
     ));
+  }
+
+  // Sound became on-by-default with the speaker button; turn it on once for
+  // older saves, which were created when it defaulted to off.
+  if (parsed.settings && !parsed.settings.soundDefaulted) {
+    parsed.settings = { ...parsed.settings, sound: true, soundDefaulted: true };
   }
 
   // The island restyle: every save gets the Island season for free, and is

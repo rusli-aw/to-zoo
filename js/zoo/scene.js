@@ -249,7 +249,7 @@ export class ZooScene {
 
   /**
    * Take the camera off its resting shot and fly it to a scripted one — the
-   * intro uses this to stand outside the gate and walk in. The flight is the
+   * camera can be flown to a scripted shot. The flight is the
    * same frame-rate-independent damping the focus pull uses, so a new shot
    * mid-flight simply bends the path toward it. Pass null to hand back.
    *

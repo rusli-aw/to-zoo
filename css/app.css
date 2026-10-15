@@ -15,6 +15,7 @@ html, body {
 }
 
 body {
+  font-variation-settings: "INFM" 55;
   font-family: var(--font-body);
   font-size: var(--step-0);
   line-height: 1.5;
@@ -577,7 +578,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
    back to a clear pane with a hairline edge. Without it (no WebGL),
    the CSS frost above still applies. */
 
-:root.glass-on :is(.sheet, .health, .nav, .group-chip, .today, .piggy,
+:root.glass-on :is(.sheet, .health, .nav, .group-chip, .sound-btn, .today, .piggy,
                    .avatar-btn, .hover-card, .release-skip .btn, .mood-bar) {
   background: transparent;
   backdrop-filter: none;
@@ -606,11 +607,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .brand__name { font-family: var(--font-display); font-weight: 400; letter-spacing: .01em; }
 body { font-optical-sizing: auto; }
 .health__pct { color: var(--ink-muted); }
-/* Nunito: bold, rounded headings; no tight tracking (it closes up the
-   counters on a rounded face). */
+/* Hand-lettered: headings fully informal, body a touch tidier. */
 h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
-  font-weight: 800;
-  letter-spacing: -0.005em;
+  font-weight: 700;
+  letter-spacing: 0;
+  font-variation-settings: "INFM" 100;
 }
 /* Uppercase labels: smaller, medium weight, a little open. */
 :is(.btn, .nav__label, .chip, .segmented button, .field__label, .health__word,
@@ -637,7 +638,6 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
 }
 
 @media (min-width: 641px) { .hud-strip { display: none; } }
-.app[data-intro] .hud-strip { opacity: 0; }
 
 /* ── the announcement strip: a thin apricot bar for gentle nudges ── */
 .announce {
@@ -659,7 +659,6 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
 @media (max-width: 640px) { .announce { font-size: 11px; } }
 .announce[hidden] { display: none; }
 .app.has-announce :is(.hud--tl, .hud--tr) { top: calc(var(--sp-5) + 28px); }
-.app[data-intro] .announce { display: none; }
 
 /* Line icons, drawn with a slightly unsteady pen. */
 .ic { filter: url(#ink-pen); }
@@ -701,3 +700,16 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
 .group-chip__faces { display: inline-flex; }
 .group-chip__faces > span { width: 22px; height: 22px; margin-right: -6px; border-radius: 50%; box-shadow: 0 0 0 2px var(--surface); }
 .group-chip__faces > span:last-child { margin-right: 2px; }
+
+/* ── speaker toggle ── */
+.sound-btn {
+  pointer-events: auto;
+  width: 42px; height: 42px;
+  display: grid; place-items: center;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.sound-btn .ic { width: 20px; height: 20px; }
+.sound-btn[aria-pressed="false"] { color: var(--ink-faint); }

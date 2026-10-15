@@ -11,7 +11,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shantell+Sans:ital,wght,BNCE,INFM@0,300..800,-100..100,0..100&display=swap">
 
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/app.css">
@@ -177,7 +177,7 @@
   <div class="hud-strip" aria-hidden="true"></div>
 
   <header class="hud hud--tl">
-    <div class="brand">
+    <button class="brand" id="brand" type="button" aria-label="To-Zoo: behind the scenes">
       <span class="brand__mark" aria-hidden="true">
         <!-- An elephant's head, three-quarter on: domed skull, one big ear,
              a trunk curling down and forward, and a tusk. Drawn in the same
@@ -195,7 +195,7 @@
         </svg>
       </span>
       <span class="brand__name">To-Zoo</span>
-    </div>
+    </button>
     <button class="group-chip" id="group-chip" type="button" hidden></button>
     <p class="status-line" id="status-line" aria-live="polite">Your zoo is thriving</p>
   </header>
@@ -228,6 +228,7 @@
       <span class="piggy__value" id="token-value">0</span>
     </button>
 
+    <button class="sound-btn" id="sound-btn" type="button" aria-label="Sound"></button>
     <button class="avatar-btn" id="avatar-btn" type="button" aria-label="Your profile">
       <span class="avatar" id="avatar"></span>
       <span class="streak-pip" id="streak-pip" hidden></span>

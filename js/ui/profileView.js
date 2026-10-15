@@ -186,7 +186,6 @@ export function renderProfileView(root, ctx) {
           ${state.tasks.length === 0
             ? '<button class="btn btn--quiet btn--sm" type="button" data-demo>Load a demo zoo</button>'
             : '<button class="btn btn--quiet btn--sm" type="button" data-clear>Clear all tasks</button>'}
-          <button class="btn btn--quiet btn--sm" type="button" data-intro>Replay intro</button>
           <button class="btn btn--danger btn--sm" type="button" data-reset>Reset everything</button>
         </div>
       </div>
@@ -231,11 +230,6 @@ export function renderProfileView(root, ctx) {
       window.dispatchEvent(new CustomEvent('to-zoo:preferences'));
     });
   }
-
-  root.querySelector('[data-intro]')?.addEventListener('click', () => {
-    ctx.views.show('zoo');
-    window.dispatchEvent(new CustomEvent('to-zoo:intro'));
-  });
 
   root.querySelector('[data-demo]')?.addEventListener('click', () => {
     loadDemo();

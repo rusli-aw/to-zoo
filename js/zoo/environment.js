@@ -340,7 +340,7 @@ export function buildEnvironment(zoo, space = null) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     let size = 70;
-    const font = (px) => `800 ${px}px "Nunito", ui-rounded, system-ui, sans-serif`;
+    const font = (px) => `700 ${px}px "Shantell Sans", "Comic Sans MS", system-ui, sans-serif`;
     ctx.font = font(size);
     while (ctx.measureText(text).width > w - 70 && size > 28) ctx.font = font(size -= 4);
     ctx.fillText(text, w / 2, h / 2 + 3);

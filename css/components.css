@@ -1146,121 +1146,6 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 .segmented button.is-on { background: var(--action); color: var(--on-action); box-shadow: none; }
 .mood-bar { border-radius: 0; }
 
-/* ══════════════════════════════════════════════════ intro ══
-   The walk-in. The zoo is the backdrop; the title sits over the
-   gate and the cards sit low, so the animal being introduced
-   stays in view above them. */
-
-.app[data-intro] :is(.hud, .nav, .empty, .animal-proxies, .mood-bars, .mood-bar, .hover-card) {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transition: opacity var(--dur-slow) var(--ease-soft);
-}
-
-.intro {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  pointer-events: none;
-  padding: var(--sp-5);
-  transition: opacity var(--dur-slow) var(--ease-soft);
-}
-.intro[data-leaving] { opacity: 0; }
-.intro > * { pointer-events: auto; }
-
-.intro[data-step="title"] {
-  grid-template-rows: auto 1fr auto;
-  justify-items: center;
-  padding-top: 9vh;
-  padding-bottom: 7vh;
-}
-.intro__title-actions { grid-row: 3; }
-.intro__title-block { text-align: center; display: grid; justify-items: center; gap: var(--sp-3); }
-.intro__eyebrow {
-  margin: 0;
-  font-size: var(--step--1);
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--ink-muted);
-  text-shadow: 0 0 12px var(--paper);
-}
-.intro__wordmark {
-  margin: 0;
-  font-size: clamp(3.2rem, 2rem + 6vw, 6.5rem);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: var(--ink);
-  text-shadow: 0 0 30px color-mix(in srgb, var(--paper) 70%, transparent);
-}
-.intro[data-step="title"] .intro__actions { flex-direction: column; }
-.btn--lg { font-size: var(--step-0); padding: var(--sp-4) var(--sp-7); }
-
-.intro:not([data-step="title"]) { place-items: end center; padding-bottom: 6vh; }
-.intro > * { transition: opacity 200ms var(--ease-soft), transform 200ms var(--ease-soft); }
-.intro > .is-out { opacity: 0; transform: translateY(calc(6px * var(--motion))); }
-.intro__card {
-  width: min(560px, 100%);
-  padding: var(--sp-5) var(--sp-5) var(--sp-4);
-  background: var(--surface);
-  box-shadow: var(--hairline);
-  animation: intro-card 420ms var(--ease-out);
-}
-:root.glass-on .intro__card { background: transparent; box-shadow: var(--glass-edge); }
-@keyframes intro-card {
-  from { opacity: 0; transform: translateY(calc(10px * var(--motion))); }
-}
-.intro__kicker {
-  margin: 0 0 var(--sp-1);
-  display: flex; align-items: center; gap: var(--sp-2);
-  font-size: var(--step--2);
-  font-weight: 800;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--accent-deep);
-}
-.intro__kicker .ic { width: 18px; height: 18px; }
-.intro__heading { font-size: var(--step-3); margin-bottom: var(--sp-2); }
-.intro__heading:focus { outline: none; }
-.intro__body { margin: 0; color: var(--ink-muted); line-height: 1.55; max-width: 48ch; }
-.intro__meta {
-  margin: var(--sp-3) 0 0;
-  display: flex; align-items: center; gap: var(--sp-2);
-  font-size: var(--step--1);
-  color: var(--ink-muted);
-}
-.intro__foot {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--sp-4);
-  margin-top: var(--sp-5);
-}
-.intro__actions { display: flex; gap: var(--sp-2); align-items: center; }
-.intro__dots { display: flex; gap: 6px; }
-.intro__dot { width: 7px; height: 7px; background: color-mix(in srgb, var(--ink) 22%, transparent); }
-.intro__dot.is-on { background: var(--action); box-shadow: inset 0 0 0 1px var(--ink); }
-.intro__skip {
-  border: 0;
-  background: none;
-  padding: var(--sp-2);
-  margin-top: var(--sp-2);
-  font-size: var(--step--1);
-  font-weight: 600;
-  color: var(--ink-muted);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.intro__card .intro__skip { display: block; margin: var(--sp-3) auto 0; }
-.intro__skip:hover { color: var(--ink); }
-
-@media (max-width: 560px) {
-  .intro__foot { flex-direction: column-reverse; align-items: stretch; }
-  .intro__actions { justify-content: stretch; }
-  .intro__actions .btn { flex: 1; }
-}
-
 /* ── bedtime ── */
 .mood-bars[data-sleeping] .mood-bar__face,
 .mood-bars[data-sleeping] .mood-bar__track { opacity: .35; }
@@ -1371,3 +1256,77 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 /* ── painted item thumbnails ── */
 .shop-card__art:has(.shop-card__img) { padding: 0; aspect-ratio: 1; height: auto; background: none; }
 .shop-card__img { display: block; width: 100%; height: 100%; object-fit: cover; box-shadow: inset 0 0 0 1px var(--line-strong); }
+
+/* ═════════════════════════════════════════════════ postcard ══
+   Two borders like a printed card: terracotta outside, honey inside. */
+
+.brand { pointer-events: auto; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; font: inherit; }
+.brand:hover .brand__mark { transform: rotate(-8deg); }
+.brand__mark { transition: transform var(--dur) var(--ease-bounce); }
+
+.modal--postcard .modal__panel {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  padding: 14px;
+  background: #f4e1d4;
+  border: 3px solid #d9703a;
+  border-radius: 10px;
+  box-shadow: 0 30px 60px rgba(87, 61, 33, .3);
+  transform: translate(-50%, -50%) rotate(-1deg);
+}
+.modal--postcard .modal__head,
+.modal--postcard .modal__body {
+  background: #faf2e8;
+  border-left: 2.5px solid #e9b25e;
+  border-right: 2.5px solid #e9b25e;
+}
+.modal--postcard .modal__head {
+  border-top: 2.5px solid #e9b25e;
+  border-radius: 6px 6px 0 0;
+  padding: var(--sp-2) var(--sp-2) 0;
+  justify-content: flex-end;
+}
+/* The dialog's own title stays for screen readers; the card shows its own
+   heading under the photo, as in the sketch. */
+.modal--postcard .modal__head > div {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
+}
+.modal--postcard .modal__body {
+  border-bottom: 2.5px solid #e9b25e;
+  border-radius: 0 0 6px 6px;
+  padding: 0 var(--sp-6) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+}
+.postcard__title {
+  margin: var(--sp-4) 0 var(--sp-4);
+  color: #d9a24a;
+  font-size: var(--step-2);
+  font-variation-settings: "INFM" 100;
+}
+.postcard__photo {
+  margin: 0;
+  width: 72%;
+  aspect-ratio: 4 / 3;
+  border: 2.5px solid #e9b25e;
+  border-radius: 6px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: #fbf6ee;
+  transform: rotate(1.2deg);
+}
+.postcard__photo { flex: none; }
+.postcard__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.postcard__photo img[hidden], .postcard__photo figcaption[hidden] { display: none; }
+.postcard__photo figcaption { padding: var(--sp-4); text-align: center; color: #d9a24a; font-weight: 700; }
+
+.postcard__note { color: #8a4a26; font-size: var(--step-0); line-height: 1.6; }
+.postcard__note p { margin: 0 0 var(--sp-3); }
+.postcard__sign { font-weight: 700; color: #d9703a; font-variation-settings: "INFM" 100; }
+.postcard__paws { width: 70%; margin-top: var(--sp-2); }
+.modal--postcard .modal__body > * { flex: none; }
+.postcard__paws { display: block; height: auto; aspect-ratio: 260 / 64; }
+.postcard__sign { text-align: center; }

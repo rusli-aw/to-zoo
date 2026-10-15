@@ -17,7 +17,7 @@ import { buildDuskLife } from './zoo/dusklife.js';
 import { renderPortraits } from './zoo/portraits.js';
 import { renderThumbnails } from './zoo/thumbnails.js';
 import { createGroupSync, parseInvite } from './group.js';
-import { avatarMark } from './ui/icons.js';
+import { avatarMark, icon } from './ui/icons.js';
 import { createSpace } from './zoo/space.js';
 import { createDaylight, clockIsNight } from './zoo/daylight.js';
 import { buildSeasons } from './zoo/seasons.js';
@@ -29,7 +29,7 @@ import { buildDecorations } from './zoo/decorations.js';
 import { refresh as refreshPalette } from './zoo/palette.js';
 
 import {
-  getState, subscribe, onError, mood as zooMoodOf,
+  getState, subscribe, onError, mood as zooMoodOf, setSetting,
   taskById, completeTask, uncompleteTask, setUser, finishOnboarding, loadDemo,
   shopItems, settleUpkeep, placedItems,
 } from './store.js';
@@ -41,9 +41,9 @@ import { openAddTask } from './ui/addTask.js';
 import { openTaskPanel } from './ui/taskPanel.js';
 import { flyTokens, toast } from './ui/toast.js';
 import { confirmDialog } from './ui/dialog.js';
+import { openPostcard } from './ui/postcard.js';
 import { isDialogOpen } from './ui/dialog.js';
 import { mountViews } from './ui/views.js';
-import { runIntro } from './ui/intro.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -182,6 +182,21 @@ async function boot() {
     animals: () => population.positions(),
   });
   setStepListener((type, pos, foot) => audio.step(type, pos.x, pos.z, foot));
+
+  // The speaker in the corner: one tap to mute or unmute.
+  const soundBtn = $('sound-btn');
+  function paintSoundBtn() {
+    const on = !!getState().settings.sound;
+    soundBtn.innerHTML = icon(on ? 'soundOn' : 'soundOff');
+    soundBtn.setAttribute('aria-pressed', String(on));
+    soundBtn.setAttribute('aria-label', on ? 'Mute sound' : 'Turn sound on');
+  }
+  soundBtn.addEventListener('click', () => {
+    setSetting('sound', !getState().settings.sound);
+    audio.setEnabled(!!getState().settings.sound);
+    paintSoundBtn();
+  });
+  paintSoundBtn();
 
   // Sound needs a user gesture. If it was left on, the first click starts it.
   if (getState().settings.sound) {
@@ -488,7 +503,7 @@ async function boot() {
   renderGroupChip();
   subscribe((_, change) => { if (change.type.startsWith('group:')) renderGroupChip(); });
 
-  /** Opened from an invite link: offer to join (after the intro, if any). */
+  /** Opened from an invite link: offer to join. */
   async function joinFromUrl() {
     const params = new URLSearchParams(location.search);
     const id = parseInvite(`?zoo=${params.get('zoo') ?? ''}`);
@@ -545,6 +560,7 @@ async function boot() {
   $('empty-add').addEventListener('click', addTask);
   $('tokens').addEventListener('click', () => views.show('customize'));
   $('avatar-btn').addEventListener('click', () => views.show('profile'));
+  $('brand').addEventListener('click', openPostcard);
 
   /* ------------------------------------------------------------ theme -- */
 
@@ -619,10 +635,9 @@ async function boot() {
       console.error('[to-zoo] could not size the stage', err);
     }
 
-    if (!getState().onboarded) {
-      startIntro();
-      return;
-    }
+    // First visit: straight into an empty zoo; the "add your first task"
+    // card does the explaining.
+    if (!getState().onboarded) finishOnboarding();
     joinFromUrl();
 
     // Settle the bill after the zoo is on screen, so the coins have something
@@ -634,34 +649,13 @@ async function boot() {
   // frames at all, so the timer is what actually reveals the app there.
   setTimeout(reveal, 1500);
 
-  /**
-   * The walk-in. Runs on first launch, and again from Profile → Replay intro.
-   * Skipping drops you straight into the zoo; finishing offers a first task
-   * or the demo zoo.
-   */
-  let intro = null;
-  function startIntro() {
-    if (intro) return;
-    intro = runIntro({
-      zoo, environment, picking, space,
-      onFinish({ demo, skipped }) {
-        intro = null;
-        finishOnboarding();
-        if (demo) loadDemo();
-        syncWorld();
-        if (new URLSearchParams(location.search).has('zoo')) joinFromUrl();
-        else if (!demo && !skipped) setTimeout(addTask, 420);
-      },
-    });
-  }
-  window.addEventListener('to-zoo:intro', startIntro);
   window.addEventListener('to-zoo:show', (e) => views.show(e.detail));
 
   // Exposed for debugging and for driving the app from the console.
   window.toZoo = {
     zoo, environment, grass, fence, clutter, decorations, population, picking, release, views,
     space, daylight, moodBars, seasons,
-    syncWorld, addTask, openTask, completeAndRelease, startIntro,
+    syncWorld, addTask, openTask, completeAndRelease,
   };
 }
 

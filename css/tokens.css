@@ -2,7 +2,7 @@
    To-Zoo — design tokens
 
    A painted dusk on cream paper. Walnut ink on vintage cream,
-   one rounded face (Nunito) in sentence case throughout.
+   one hand-lettered face (Shantell Sans) in sentence case throughout.
    Square corners, no shadows: structure is
    1px saddle-brown lines and the shift from cream to bone.
 
@@ -122,12 +122,12 @@
   --focus:        #573d21;
 
   /* --- typography --- */
-  /* Nunito: rounded and soft, the picture-book voice. ui-rounded
-     (SF Pro Rounded on Apple) is the fallback if the web font is blocked. */
-  --font-display: "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-body:    "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Shantell Sans: hand-lettered, like a note on the fridge, but drawn
+     for screens so task lists stay readable. INFM is how informal it gets. */
+  --font-display: "Shantell Sans", "Patrick Hand", "Comic Sans MS", ui-rounded, system-ui, sans-serif;
+  --font-body:    "Shantell Sans", "Patrick Hand", "Comic Sans MS", ui-rounded, system-ui, sans-serif;
   /* Uppercase condensed for every functional label: nav, buttons, chips. */
-  --font-ui:      "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-ui:      "Shantell Sans", "Patrick Hand", "Comic Sans MS", ui-rounded, system-ui, sans-serif;
   --track-ui:     0;
   --font-mono:    ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 
