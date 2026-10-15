@@ -1,15 +1,16 @@
 /**
  * To-Zoo — the postcard.
  *
- * Tap the logo and a postcard from the people who made To-Zoo slides in:
- * a photo of the three of us, why it exists, and a line of paw prints, one
- * from each animal. A personal note in an app that is otherwise all task.
+ * Tap the logo and a postcard from the people who made To-Zoo arrives: the
+ * photo on the front, and on the back a handwritten note, a stamp, a
+ * postmark, address lines and a trail of paw prints from each animal.
  *
  * The photo is assets/team.jpg. Until it exists the frame shows a quiet
  * placeholder rather than a broken image.
  */
 
 import { openDialog } from './dialog.js';
+import { portraitOf } from '../zoo/portraits.js';
 
 const PHOTO = 'assets/team.jpg';
 
@@ -54,27 +55,49 @@ export function openPostcard() {
     title: 'Behind To-Zoo',
     className: 'modal--postcard',
     body: `
-      <figure class="postcard__photo">
-        <img src="${PHOTO}" alt="The three of us who made To-Zoo"
-             onerror="this.hidden = true; this.nextElementSibling.hidden = false">
-        <figcaption hidden>A photo of the three of us goes here</figcaption>
-      </figure>
-      <h3 class="postcard__title" aria-hidden="true">Behind To-Zoo</h3>
-      <div class="postcard__note">
-        <p>To-Zoo started with three students and a to-do list we kept not looking at.</p>
-        <p>Not because we didn't care. A list just doesn't care back. It gets longer and
-           quieter, and it's so easy to close the tab and drift somewhere else.</p>
-        <p>So we gave every task a heartbeat. The essay you keep putting off becomes an
-           elephant, waiting for you by the gate. The quick email becomes a rabbit.
-           They're patient. But they notice when you're gone.</p>
-        <p>It turns out it's easier to show up for something that's waiting for you than
-           for a checkbox. Caring for a whole zoo gives the day a shape, a small sense of
-           responsibility, and a small win every time one of them gets to go home.</p>
-        <p>This is for every student who has opened their laptop to work and ended up
-           somewhere else. We've been there too. Your animals will wait for you. Just
-           don't make them wait too long.</p>
-        <p class="postcard__sign">With love, the three of us</p>
-      </div>
-      ${PAWS}`,
+      <article class="postcard">
+        <figure class="postcard__photo">
+          <img src="${PHOTO}" alt="The three of us who made To-Zoo"
+               onerror="this.hidden = true; this.nextElementSibling.hidden = false">
+          <figcaption hidden>A photo of the three of us goes here</figcaption>
+          <span class="postcard__greeting">Greetings from To-Zoo</span>
+        </figure>
+
+        <div class="postcard__back">
+          <div class="postcard__message">
+            <h3 class="postcard__title">Behind To-Zoo</h3>
+            <p>To-Zoo started with three students and a to-do list we kept not looking at.
+               Not because we didn't care. A list just doesn't care back.</p>
+            <p>So we gave every task a heartbeat. The essay you keep putting off is an
+               elephant, waiting by the gate. The quick email is a rabbit. They're patient,
+               but they notice when you're gone.</p>
+            <p>It's easier to show up for something that's waiting for you than for a
+               checkbox. Caring for a whole zoo gives the day a shape, and a small win
+               every time one of them gets to go home.</p>
+            <p class="postcard__sign">With love, the three of us</p>
+          </div>
+
+          <div class="postcard__address">
+            <div class="postcard__stamp">
+              <img src="${portraitOf('elephant')}" alt="">
+              <span>To-Zoo</span>
+            </div>
+            <svg class="postcard__postmark" viewBox="0 0 120 120" aria-hidden="true">
+              <circle cx="60" cy="60" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
+              <circle cx="60" cy="60" r="34" fill="none" stroke="currentColor" stroke-width="1.5"/>
+              <text x="60" y="56" text-anchor="middle" font-size="13" fill="currentColor">TO-ZOO</text>
+              <text x="60" y="73" text-anchor="middle" font-size="11" fill="currentColor">${new Date().getFullYear()}</text>
+              <path d="M104 46c8 3 14 3 20 0M104 60c8 3 14 3 20 0M104 74c8 3 14 3 20 0" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <div class="postcard__lines">
+              <p>To: every student who opened their laptop to work and ended up somewhere else</p>
+              <p>We've been there too.</p>
+              <p>Your animals will wait for you.</p>
+              <p>Just don't make them wait too long.</p>
+            </div>
+            ${PAWS}
+          </div>
+        </div>
+      </article>`,
   });
 }
