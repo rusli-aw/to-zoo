@@ -9,5 +9,5 @@
  * Left empty, group zoos still work in "local test mode": they sync between
  * tabs of the same browser only, which is enough to try the whole flow.
  */
-export const SUPABASE_URL = '';
-export const SUPABASE_ANON_KEY = '';
+export const SUPABASE_URL = 'https://tmzvmsycvihorrogxegy.supabase.co';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRtenZtc3ljdmlob3Jyb2d4ZWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwOTkxNjksImV4cCI6MjEwNzY3NTE2OX0.6SiWChGhOtnTd5r3FxUirwhoQMr_WHfPRzToZEpDsBA';
