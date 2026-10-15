@@ -14,6 +14,7 @@
 import * as THREE from 'three';
 import { color, refresh as refreshPalette } from './palette.js';
 import { Ink } from './inkline.js';
+import { createGlass } from './glass.js';
 
 /** Rough device tiers. Cheaper than benchmarking and stable across frames. */
 export function qualityTier() {
@@ -45,7 +46,10 @@ export class ZooScene {
       powerPreference: 'high-performance',
       alpha: false,
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.quality.dpr));
+    /** Retro renders at a fixed low resolution and lets CSS upscale it
+     *  with hard pixel edges; smooth renders at the device's resolution. */
+    this.retro = false;
+    this.renderer.setPixelRatio(this.#pixelRatio(window.innerWidth, window.innerHeight));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     if (this.quality.shadows) {
       this.renderer.shadowMap.enabled = true;
@@ -111,6 +115,15 @@ export class ZooScene {
     this._tmp = new THREE.Vector3();
     this._desired = new THREE.Vector3();
     this._desiredLook = new THREE.Vector3();
+
+    /** Liquid-glass compositing for the HUD; null falls back to CSS frost. */
+    this.glass = null;
+    try {
+      this.glass = createGlass(this);
+      document.documentElement.classList.add('glass-on');
+    } catch (err) {
+      console.warn('[to-zoo] liquid glass unavailable, using CSS frost', err);
+    }
 
     this.#buildLights();
     this.#bindEvents();
@@ -184,6 +197,26 @@ export class ZooScene {
     };
   }
 
+  /**
+   * Switch between chunky pixels and full resolution.
+   * @param {boolean} retro
+   */
+  setRetro(retro) {
+    this.retro = retro;
+    this.canvas.style.imageRendering = retro ? 'pixelated' : '';
+    this.resize();
+  }
+
+  /**
+   * Retro aims for about 380 lines tall, whatever the screen, so the pixels
+   * are the same chunky size on a phone and a monitor. It never drops below
+   * 240 columns, which is where a portrait phone would turn to mush.
+   */
+  #pixelRatio(w, h) {
+    if (!this.retro) return Math.min(window.devicePixelRatio || 1, this.quality.dpr);
+    return Math.min(1, Math.max(380 / h, 240 / w));
+  }
+
   setReducedMotion(reduced) {
     this.reduced = reduced;
     this.ink.setReducedMotion(reduced);
@@ -246,6 +279,7 @@ export class ZooScene {
    */
   applyTheme() {
     refreshPalette();
+    this.glass?.applyTheme();
     if (this.ownsLighting) return;
     this.scene.background = color('sky-low').clone();
     if (this.scene.fog) this.scene.fog.color.copy(color('sky-low'));
@@ -276,6 +310,7 @@ export class ZooScene {
     this.camBase.set(0, portrait ? 5 : 3.8, portrait ? 16.5 : 13);
     this.lookBase.set(0, portrait ? 1.8 : 1.4, -2);
     this.camera.updateProjectionMatrix();
+    this.renderer.setPixelRatio(this.#pixelRatio(w, h));
     this.renderer.setSize(w, h, false);
   }
 
@@ -328,7 +363,8 @@ export class ZooScene {
 
     for (const fn of this.updaters) fn(dt, this.elapsed);
 
-    this.renderer.render(this.scene, this.camera);
+    if (this.glass) this.glass.render(this.scene, this.camera);
+    else this.renderer.render(this.scene, this.camera);
   }
 
   dispose() {
@@ -338,6 +374,7 @@ export class ZooScene {
     this.canvas.removeEventListener('pointermove', this._onPointerMove);
     this.canvas.removeEventListener('pointerleave', this._onPointerLeave);
     this.ink.dispose();
+    this.glass?.dispose();
     this.scene.traverse((o) => {
       const mesh = /** @type {any} */ (o);
       mesh.geometry?.dispose?.();

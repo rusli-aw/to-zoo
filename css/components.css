@@ -14,8 +14,7 @@
   display: inline-block;
   width: 18px; height: 18px;
   border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%,
-    color-mix(in srgb, var(--accent) 50%, white), var(--accent));
+  background: var(--accent);
   box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--accent-deep) 70%, transparent);
   vertical-align: -3px;
   flex: none;
@@ -80,8 +79,8 @@
 .field__input:hover { border-color: var(--line-strong); }
 .field__input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent);
 }
 .field__input[aria-invalid="true"] { border-color: var(--overdue); }
 .field__input--lead { font-size: var(--step-1); padding: var(--sp-4); }
@@ -101,7 +100,7 @@ textarea.field__input { resize: vertical; min-height: 72px; }
   color: var(--ink-muted);
   cursor: pointer;
 }
-.switch input { width: 18px; height: 18px; accent-color: var(--accent); }
+.switch input { width: 18px; height: 18px; accent-color: var(--action); }
 
 .more { margin-bottom: var(--sp-4); }
 .more summary {
@@ -165,10 +164,10 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 .animal-card__tag { font-size: var(--step--2); color: var(--ink-muted); margin-top: var(--sp-1); }
 
 .animal-card.is-on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: var(--action);
+  background: var(--surface);
 }
-.animal-card.is-on .animal-card__size { color: var(--accent-deep); }
+.animal-card.is-on .animal-card__size { color: var(--ink); }
 
 .suggestion {
   display: flex;
@@ -444,7 +443,7 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 }
 .search__input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--ink);
   background: var(--surface);
 }
 .select select {
@@ -609,25 +608,7 @@ textarea.field__input { resize: vertical; min-height: 72px; }
   font-size: 34px;
   margin-bottom: var(--sp-3);
 }
-.shop-card__art::after { content: "🌿"; }
-.shop-card__art[data-art="meadow"]::after { content: "🌼"; }
-.shop-card__art[data-art="stonePath"]::after { content: "🪨"; }
-.shop-card__art[data-art="termiteMounds"]::after { content: "🏜️"; }
-.shop-card__art[data-art="acacia"]::after { content: "🌳"; }
-.shop-card__art[data-art="baobab"]::after { content: "🪵"; }
-.shop-card__art[data-art="feverTrees"]::after { content: "🌲"; }
-.shop-card__art[data-art="wateringHole"]::after { content: "💧"; }
-.shop-card__art[data-art="stream"]::after { content: "🏞️"; }
-.shop-card__art[data-art="waterfall"]::after { content: "⛲"; }
-.shop-card__art[data-art="observationDeck"]::after { content: "🔭"; }
-.shop-card__art[data-art="rangerStation"]::after { content: "🛖"; }
-.shop-card__art[data-art="woodenBridge"]::after { content: "🌉"; }
-.shop-card__art[data-art="campsite"]::after { content: "⛺"; }
-.shop-card__art[data-art="safariJeep"]::after { content: "🚙"; }
-.shop-card__art[data-art="sunHats"]::after { content: "👒"; }
-.shop-card__art[data-art="sunglasses"]::after { content: "🕶️"; }
-".shop-card__art[data-art="flowerCrowns"]::after { content: "💐"; }
-
+"
 /* No emoji exists for an udeng, so it is drawn rather than approximated with
    something from the wrong culture. */
 .shop-card__art[data-art="udeng"]::after {
@@ -637,9 +618,6 @@ textarea.field__input { resize: vertical; min-height: 72px; }
   background-position: center;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 34' fill='none' stroke='%232b261e' stroke-width='2.2' fill='%23f7f3e9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 22c0-7 7-12 16-12s16 5 16 12'/%3E%3Cpath d='M7 22c4 3 10 4.5 16 4.5S35 25 39 22'/%3E%3Cpath d='M12 12c-1-5 0-8 2-9'/%3E%3Cpath d='M34 12c1-5 0-8-2-9'/%3E%3Cpath d='M19 24c1.5-2.5 6.5-2.5 8 0'/%3E%3Cpath d='M9 17h28' stroke='%23b9702f'/%3E%3C/svg%3E");
 }
-.shop-card__art[data-art="lanterns"]::after { content: "🏮"; }
-.shop-card__art[data-art="butterflies"]::after { content: "🦋"; }
-.shop-card__art[data-art="fireflies"]::after { content: "✨"; }
 
 .shop-card__name { font-size: var(--step-0); margin-bottom: var(--sp-1); }
 .shop-card__blurb { margin: 0 0 var(--sp-3); font-size: var(--step--2); color: var(--ink-muted); flex: 1; }
@@ -721,15 +699,15 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 .profile-head { display: flex; align-items: flex-end; gap: var(--sp-4); margin-bottom: var(--sp-5); }
 .profile-avatar {
   width: 64px; height: 64px;
-  border: 2px dashed var(--line-strong);
+  padding: 0;
+  border: 0;
   border-radius: 50%;
-  background: var(--surface-2);
-  font-size: 30px;
+  background: none;
   cursor: pointer;
   flex: none;
   transition: transform var(--dur-fast) var(--ease-bounce);
 }
-.profile-avatar:hover { transform: scale(1.06) rotate(-6deg); }
+.profile-avatar:hover { transform: scale(1.05); }
 .profile-name { flex: 1; margin: 0; }
 
 .stat-grid {
@@ -863,7 +841,7 @@ textarea.field__input { resize: vertical; min-height: 72px; }
   background: var(--surface-3);
   transition: all var(--dur) var(--ease-out);
 }
-.dot.is-on { background: var(--accent); width: 22px; border-radius: var(--radius-pill); }
+.dot.is-on { background: var(--action); width: 22px; border-radius: var(--radius-pill); }
 
 .onboarding__actions { display: flex; justify-content: center; gap: var(--sp-3); }
 
@@ -1116,7 +1094,7 @@ textarea.field__input { resize: vertical; min-height: 72px; }
   transition: all var(--dur-fast) var(--ease-out);
 }
 .season:hover { border-color: var(--line-strong); transform: translateY(calc(-2px * var(--motion))); }
-.season.is-on { border-color: var(--accent); background: var(--accent-soft); }
+.season.is-on { border-color: var(--action); background: var(--surface); }
 .season.is-locked { opacity: .72; }
 
 .season__emoji { font-size: 26px; line-height: 1.2; }
@@ -1131,4 +1109,26 @@ textarea.field__input { resize: vertical; min-height: 72px; }
   align-items: center;
   gap: 3px;
 }
-.season.is-on .season__foot { color: var(--accent-deep); }
+.season.is-on .season__foot { color: var(--ink); }
+
+/* ═══════════════════════════════════════════════════ icons ══
+   Line icons replace every emoji. They size to the text around
+   them, so an icon in a 30px "emoji" slot is 30px. */
+
+.ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; flex: none; }
+.nav__icon .ic { width: 18px; height: 18px; vertical-align: middle; }
+.mood-bar__face .ic { width: 12px; height: 12px; vertical-align: middle; }
+.shop-card__art { display: grid; place-items: center; color: var(--ink-muted); }
+.shop-card__art .ic { width: 40%; height: 40%; max-width: 56px; max-height: 56px; }
+
+.avatar-mark {
+  display: block;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--swatch);
+  color: rgba(255, 255, 255, .92);
+}
+.avatar-mark svg { display: block; width: 100%; height: 100%; }
+.avatar { display: block; width: 38px; height: 38px; }
+.share-card__avatar { display: inline-block; width: 48px; height: 48px; }

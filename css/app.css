@@ -27,16 +27,16 @@ body {
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);
-  font-variation-settings: "SOFT" 40, "WONK" 1;
-  font-weight: 600;
-  line-height: 1.15;
+  font-variation-settings: "wdth" 88;
+  font-weight: 500;
+  line-height: 1.1;
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 button, input, select, textarea { font: inherit; color: inherit; }
 
-:where(a) { color: var(--accent-deep); }
+:where(a) { color: var(--link); text-underline-offset: 2px; }
 
 /* A single, consistent focus ring everywhere. */
 :focus-visible {
@@ -88,7 +88,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .loader__word {
   font-family: var(--font-display);
-  font-variation-settings: "SOFT" 60, "WONK" 1;
+  font-variation-settings: "wdth" 88;
   font-size: var(--step-3);
   font-weight: 600;
   margin: var(--sp-4) 0 0;
@@ -153,7 +153,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .brand__mark svg { width: 100%; height: 100%; display: block; }
 .brand__name {
   font-family: var(--font-display);
-  font-variation-settings: "SOFT" 60, "WONK" 1;
+  font-variation-settings: "wdth" 88;
   font-size: var(--step-2);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -228,7 +228,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   width: 26px; height: 26px;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--accent) 55%, white), var(--accent));
+    var(--accent);
   box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--accent-deep) 70%, transparent);
   flex: none;
 }
@@ -329,7 +329,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--ink);
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: -0.009em;
   cursor: pointer;
   box-shadow: var(--shadow-sm);
   transition:
@@ -341,10 +342,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn:active { transform: translateY(0) scale(.98); }
 .btn[disabled] { opacity: .5; cursor: not-allowed; transform: none; box-shadow: var(--shadow-xs); }
 
-.btn--primary { background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow-pop); }
-.btn--primary:hover { background: var(--accent-deep); }
+.btn--primary { background: var(--action); color: var(--on-action); font-weight: 600; box-shadow: none; }
+.btn--primary:hover { background: var(--action-hover); box-shadow: none; }
 .btn--ghost { background: color-mix(in srgb, var(--surface) 70%, transparent); backdrop-filter: blur(8px); }
-.btn--quiet { background: var(--surface-2); box-shadow: none; }
+.btn--quiet { background: var(--surface-2); box-shadow: var(--hairline); }
 .btn--danger { background: var(--overdue-soft); color: var(--overdue); box-shadow: none; }
 .btn--sm { padding: var(--sp-2) var(--sp-3); font-size: var(--step--1); }
 .btn--block { width: 100%; }
@@ -548,3 +549,20 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .hud--bl, .hud--br { bottom: calc(var(--nav-h) + var(--sp-2)); }
   .health__legend { display: none; }
 }
+
+/* ══════════════════════════════════════════════ liquid glass ══
+   When js/zoo/glass.js is running it paints these panes' backgrounds
+   itself — the live zoo, frosted and refracted — so the DOM steps
+   back to a clear pane with a hairline edge. Without it (no WebGL),
+   the CSS frost above still applies. */
+
+:root.glass-on :is(.sheet, .health, .nav, .status-line, .today, .piggy,
+                   .avatar-btn, .hover-card, .release-skip .btn, .mood-bar) {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  /* liquid-glass-js puts this shadow on every pane. */
+  box-shadow: 0 25px 50px rgba(0, 0, 0, .25);
+}
+:root.glass-on :is(.mood-bar, .status-line) { box-shadow: 0 8px 18px rgba(0, 0, 0, .18); }
+:root.glass-on .sheet__head { border-bottom-color: color-mix(in srgb, var(--ink) 8%, transparent); }

@@ -11,6 +11,7 @@
 
 import * as THREE from 'three';
 import { ANIMALS, dueLabel, urgencyBand } from '../model.js';
+import { glyph } from '../ui/icons.js';
 
 /**
  * @param {import('./scene.js').ZooScene} zoo
@@ -56,7 +57,7 @@ export function createPicking(zoo, population, handlers) {
     hoverCard.innerHTML = `
       <span class="hover-card__title">${escapeHtml(task.title)}</span>
       <span class="hover-card__meta">
-        <span>${spec.emoji} ${spec.label}</span>
+        <span>${glyph(spec.emoji)} ${spec.label}</span>
         <span data-band="${band}">${escapeHtml(dueLabel(task))}</span>
       </span>`;
     hoverCard.hidden = false;

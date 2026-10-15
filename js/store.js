@@ -56,8 +56,8 @@ function blank() {
 
     fenceStyle: 'starter',
     theme: 'safari',           // safari | tropical | mountain
-    season: 'summer',          // spring | summer | autumn | winter
-    unlocked: { fences: ['starter'], themes: ['safari'], seasons: ['summer'] },
+    season: 'island',          // island | spring | summer | autumn | winter
+    unlocked: { fences: ['starter'], themes: ['safari'], seasons: ['island', 'summer'] },
 
     /** The last local day upkeep was charged for. */
     upkeep: { lastDay: null },
@@ -65,6 +65,7 @@ function blank() {
     settings: {
       theme: 'system',         // system | light | dark
       motion: 'system',        // system | full | reduced
+      graphics: 'smooth',      // smooth | retro
       skipRelease: false,      // remember the user's choice to skip the animation
       upkeepNotices: true,
       sound: false,
@@ -90,6 +91,14 @@ function migrate(parsed, base) {
     parsed.tasks = parsed.tasks.map((t) => (
       t?.animalType === 'sheep' ? { ...t, animalType: 'rabbit' } : t
     ));
+  }
+
+  // The island restyle: every save gets the Island season for free, and is
+  // moved onto it once. After that, whatever the player picks sticks.
+  const seasons = parsed.unlocked?.seasons;
+  if (Array.isArray(seasons) && !seasons.includes('island')) {
+    parsed.unlocked = { ...parsed.unlocked, seasons: ['island', ...seasons] };
+    parsed.season = 'island';
   }
 
   if ((parsed.version ?? 1) >= SCHEMA) return parsed;

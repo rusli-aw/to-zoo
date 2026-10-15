@@ -18,6 +18,7 @@ import { color } from './palette.js';
 import { hashString, rng } from './geom.js';
 import { buildElephant, buildLion, buildRabbit } from './anatomy.js';
 import { cosmeticGeometry } from './decorations.js';
+import { Spring } from './spring.js';
 
 const BUILDERS = { elephant: buildElephant, lion: buildLion, rabbit: buildRabbit };
 
@@ -143,12 +144,30 @@ export function createAnimal(ink, type, seedKey = '') {
   );
   headGroup.add(eyeMesh);
 
+  // Blush: flat soft pink, unlit so it never darkens into a bruise.
+  if (parts.cheeks) {
+    const blush = new THREE.Mesh(
+      parts.cheeks.clone(),
+      new THREE.MeshBasicMaterial({ color: color('blush').clone(), transparent: true, opacity: 0.75 }),
+    );
+    headGroup.add(blush);
+  }
+
   // Posture lives on its own group so lying down rolls the animal without
   // rolling its contact shadow up off the ground with it.
   const poseGroup = new THREE.Group();
   poseGroup.add(bodyGroup, headGroup);
   root.add(poseGroup);
   const rollTable = rollTableFor(type, parts);
+
+  // Plush physics, after google/motive's springs: the animal pops in with a
+  // little overshoot, squashes as each foot (or the whole rabbit) lands, and
+  // boings when you point at it. Applied to the pose group so it never
+  // fights the release choreography, which owns the root's scale.
+  const pop = new Spring(0, { frequency: 2.4, damping: 0.38 });
+  pop.target = 1;
+  const squash = new Spring(0, { frequency: 4.2, damping: 0.28 });
+  let lastStep = 0;
 
   // A soft contact shadow, so an animal never looks like it is hovering even
   // on the low tier where real shadows are off.
@@ -264,7 +283,13 @@ export function createAnimal(ink, type, seedKey = '') {
 
     setWalking(w) { walk = Math.max(0, Math.min(1, w)); },
 
-    setHovered(on) { hoverLift = on ? 1 : 0; },
+    setHovered(on) {
+      if (on && !hoverLift) squash.kick(1.8);
+      hoverLift = on ? 1 : 0;
+    },
+
+    /** A happy bounce, for when it is picked or set free. */
+    boing(strength = 1) { squash.kick(4 * strength); },
 
     /**
      * Posture, driven by mood.
@@ -327,6 +352,9 @@ export function createAnimal(ink, type, seedKey = '') {
         if (gait === 'hop') {
           const stride = elapsed * 5.2 * spec.speed + phase;
           const arc = Math.abs(Math.sin(stride));
+          // Landing: the hop count ticks over. Squash into the grass.
+          const step = Math.floor(stride / Math.PI);
+          if (step !== lastStep) { squash.kick(-3.2 * walk); lastStep = step; }
           root.position.y = arc ** 0.7 * 0.3 * walk;
           root.rotation.x = -Math.cos(stride) * 0.22 * walk;   // nose up, then down
           root.rotation.z += (0 - root.rotation.z) * damp;
@@ -334,6 +362,9 @@ export function createAnimal(ink, type, seedKey = '') {
           accentDraw.rotation.x = Math.cos(stride) * 0.34 * walk;
         } else {
           const stride = elapsed * 7 * spec.speed + phase;
+          // Each footfall: a soft little settle.
+          const step = Math.floor(stride / Math.PI);
+          if (step !== lastStep) { squash.kick(-0.8 * walk); lastStep = step; }
           root.rotation.z = Math.sin(stride) * 0.055 * walk;
           root.position.y = Math.abs(Math.sin(stride)) * 0.05 * walk;
           root.rotation.x += (0 - root.rotation.x) * damp;
@@ -369,6 +400,11 @@ export function createAnimal(ink, type, seedKey = '') {
         poseGroup.position.set(0, posture ? -(posture.drop ?? 0) * down : 0, 0);
         blobShadow.scale.set(1, 1, 1);
       }
+
+      // Squash and stretch: volume-preserving-ish, wider as it gets shorter.
+      const p = pop.update(dt);
+      const q = Math.max(-0.3, Math.min(0.3, squash.update(dt)));
+      poseGroup.scale.set(p * (1 - q * 0.5), p * (1 + q), p * (1 - q * 0.5));
 
       // Hover response: a small, immediate lift. The clearest possible signal
       // that this thing is clickable.
@@ -411,7 +447,7 @@ export function createAnimal(ink, type, seedKey = '') {
 /** Free the shared geometry cache — only needed on a full teardown. */
 export function disposeAnimalCache() {
   for (const parts of cache.values()) {
-    for (const key of ['body', 'head', 'accents', 'eyes']) parts[key]?.dispose?.();
+    for (const key of ['body', 'head', 'accents', 'eyes', 'cheeks']) parts[key]?.dispose?.();
   }
   cache.clear();
 }

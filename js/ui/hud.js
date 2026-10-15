@@ -17,6 +17,7 @@ import {
 } from '../model.js';
 import { mood as zooMoodOf } from '../store.js';
 import { reduced } from './motion.js';
+import { avatarMark, glyph } from './icons.js';
 
 const RING = 2 * Math.PI * 15.5;
 const $ = (id) => document.getElementById(id);
@@ -134,7 +135,7 @@ export function createHud(handlers = {}) {
         : `${user.tokens} tokens · nothing is costing you anything`;
 
       // ── self ──
-      els.avatar.textContent = user.avatar;
+      els.avatar.innerHTML = avatarMark(user.name, user.avatar);
       els.streak.hidden = user.streak < 2;
       els.streak.textContent = `${user.streak}`;
       els.streak.title = `${user.streak}-day streak`;
@@ -150,7 +151,7 @@ export function createHud(handlers = {}) {
         .filter((type) => counts[type] > 0)
         .map((type) => `<span title="${counts[type]} ${
           counts[type] === 1 ? ANIMALS[type].label.toLowerCase() : ANIMALS[type].plural.toLowerCase()
-        }">${ANIMALS[type].emoji} ${counts[type]}</span>`)
+        }">${glyph(ANIMALS[type].emoji)} ${counts[type]}</span>`)
         .join('') || '<span>No animals waiting</span>';
 
       // ── who needs you ──
@@ -163,7 +164,7 @@ export function createHud(handlers = {}) {
         const stage = moodStage(worst.mood);
         els.neglect.hidden = false;
         els.neglect.dataset.stage = stage.key;
-        els.neglectEmoji.textContent = spec.emoji;
+        els.neglectEmoji.innerHTML = glyph(spec.emoji);
         els.neglectTitle.textContent = worst.task.title;
         els.neglectWait.textContent = `${stage.label} · ${waitingLabel(worst.task)}`;
         els.neglect.setAttribute(

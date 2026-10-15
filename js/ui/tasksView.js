@@ -15,6 +15,7 @@ import {
 } from '../model.js';
 import { getState, reorderTasks } from '../store.js';
 import { openTaskPanel } from './taskPanel.js';
+import { glyph } from './icons.js';
 
 let query = '';
 let sort = 'priority';
@@ -118,7 +119,7 @@ export function renderTasksView(root, ctx) {
           ${showDone ? '▾' : '▸'} Released (${done.length})
         </button>
         ${showDone ? `<ul class="done-list">${done.slice(0, 24).map((t) => `
-          <li><span aria-hidden="true">${ANIMALS[t.animalType].emoji}</span>
+          <li><span aria-hidden="true">${glyph(ANIMALS[t.animalType].emoji)}</span>
               <s>${escapeHtml(t.title)}</s>
               <time>${t.completedAt ? new Date(t.completedAt).toLocaleDateString(undefined,
                 { month: 'short', day: 'numeric' }) : ''}</time></li>`).join('')}</ul>` : ''}
@@ -161,7 +162,7 @@ export function renderTasksView(root, ctx) {
     return `
       <section class="group" data-group="${type}">
         <header class="group__head">
-          <span class="group__emoji" aria-hidden="true">${spec.emoji}</span>
+          <span class="group__emoji" aria-hidden="true">${glyph(spec.emoji)}</span>
           <h3 class="group__title">${spec.plural}</h3>
           <span class="group__count">${items.length}</span>
           <span class="group__hint">${spec.sizeWord}</span>

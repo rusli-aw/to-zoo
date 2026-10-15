@@ -8,6 +8,7 @@
  */
 
 import { reduced } from './motion.js';
+import { glyph } from './icons.js';
 
 const root = () => document.getElementById('toast-root');
 const flyRoot = () => document.getElementById('token-fly-root');
@@ -50,7 +51,7 @@ export function toast(spec) {
     : '';
 
   el.innerHTML = `
-    ${spec.emoji ? `<div class="toast__emoji" aria-hidden="true">${spec.emoji}</div>` : ''}
+    ${spec.emoji ? `<div class="toast__emoji" aria-hidden="true">${glyph(spec.emoji)}</div>` : ''}
     <div class="toast__body">
       <p class="toast__title">${escapeHtml(spec.title)}</p>
       ${parts}

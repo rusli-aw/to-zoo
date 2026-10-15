@@ -12,7 +12,7 @@
 
 import * as THREE from 'three';
 import { color, mixTokens } from './palette.js';
-import { paperTexture } from './inkline.js';
+import { grassTexture, stoneTexture } from './textures.js';
 import { blob, box, cone, cyl, mergeGeometries, place, plane, rng } from './geom.js';
 
 /** Shared world layout. Anything that needs to know where the zoo ends asks here. */
@@ -75,7 +75,12 @@ export function buildEnvironment(zoo, space = null) {
   const group = new THREE.Group();
   scene.add(group);
 
-  const paper = paperTexture();
+  // Pixel-crisp patterns, nearest-filtered: the retro handheld look.
+  const wildTex = grassTexture(1);
+  wildTex.repeat.set(70, 70);
+  const zooTex = grassTexture(2);
+  zooTex.repeat.set(7, 6);
+  const stones = stoneTexture();
 
   /* ------------------------------------------------------------ sky ---- */
 
@@ -171,20 +176,19 @@ export function buildEnvironment(zoo, space = null) {
         // Only above the horizon; below it the ground and sea take over.
         sky = mix(sky, disc, edge * uSunI * smoothstep(-0.004, 0.006, h));
 
-        // Clouds, painted into the dome: soft fbm projected onto a high flat
-        // layer, drifting slowly, thinning to nothing at the horizon so they
-        // read as far away. Lit on the sun's side, blue-grey underneath, and
-        // dimmed with the rest of the world at night.
+        // Clouds: big soft cumulus, fluffy-edged, with a faintly warm body
+        // and a gentle lavender-blue underside. Slow, and not too many.
         if (h > 0.0) {
-          vec2 layer = dir.xz / (h + 0.08) * 0.9 + vec2(uTime * 0.006, uTime * 0.002);
-          float n = fbm(layer * 0.55);
-          float cover = smoothstep(0.56, 0.8, n) * smoothstep(0.015, 0.14, h);
-          float thick = smoothstep(0.55, 0.9, n);
-          vec3 lit = mix(vec3(1.0), uSunColor, 0.35) + uSunColor * pow(toward, 8.0) * 0.25;
-          vec3 shade = mix(uZenith, uHorizon, 0.55) * 0.92;
-          vec3 cloud = mix(lit, shade, thick * 0.55);
+          vec2 layer = dir.xz / (h + 0.12) * 0.7 + vec2(uTime * 0.005, uTime * 0.002);
+          float n = fbm(layer * 0.4);
+          float edge = smoothstep(0.52, 0.66, n) * smoothstep(0.02, 0.14, h);
+          float below = fbm((layer + vec2(0.0, 0.16)) * 0.4);
+          float lit = smoothstep(0.5, 0.7, below);
+          vec3 white = mix(vec3(1.0, 0.99, 0.97), uSunColor, 0.2);
+          vec3 belly = mix(white, mix(uZenith, vec3(0.86, 0.82, 0.95), 0.5), 0.3);
+          vec3 cloud = mix(belly, white, lit);
           cloud *= mix(0.22, 1.0, clamp(uAmbient / 0.62, 0.0, 1.0));
-          sky = mix(sky, cloud, cover * 0.9);
+          sky = mix(sky, cloud, edge * 0.92);
         }
 
         // Dither, so a gradient this smooth does not band on an 8-bit screen.
@@ -204,9 +208,7 @@ export function buildEnvironment(zoo, space = null) {
 
   // The wild: everything, all the way out. Lush, and never dirtied.
   const wildGeo = plane(240, 240, { rot: [-Math.PI / 2, 0, 0], pos: [0, -0.02, -40] });
-  const wildMat = new THREE.MeshLambertMaterial({ color: color('grass-lush').clone() });
-  wildMat.map = paper;
-  paper.repeat.set(24, 24);
+  const wildMat = new THREE.MeshLambertMaterial({ color: color('grass-lush').clone(), map: wildTex });
   const wildGround = new THREE.Mesh(wildGeo, wildMat);
   wildGround.receiveShadow = quality.shadows;
   group.add(wildGround);
@@ -228,7 +230,7 @@ export function buildEnvironment(zoo, space = null) {
     }
     zooGeo.computeVertexNormals();
   }
-  const zooMat = new THREE.MeshLambertMaterial({ color: color('grass').clone(), map: paper });
+  const zooMat = new THREE.MeshLambertMaterial({ color: color('grass').clone(), map: zooTex });
   const zooGround = new THREE.Mesh(zooGeo, zooMat);
   zooGround.receiveShadow = quality.shadows;
   group.add(zooGround);
@@ -245,11 +247,15 @@ export function buildEnvironment(zoo, space = null) {
     new THREE.Vector3(0, 0, -4.4),
     new THREE.Vector3(0, 0, LAYOUT.gate.z - 0.4),
   ]);
+  // Stepping stones: the gaps in the texture are transparent, so grass shows
+  // between the tiles.
+  stones.repeat.set(1, 10);
   const pathMat = new THREE.MeshLambertMaterial({
-    color: color('sand').clone(),
-    map: paper,
-    transparent: true,
-    opacity: 0.96,
+    color: color('stone').clone(),
+    map: stones,
+    alphaTest: 0.5,
+    transparent: false,
+    opacity: 1,
     polygonOffset: true,
     polygonOffsetFactor: -2,
     polygonOffsetUnits: -2,
@@ -269,13 +275,26 @@ export function buildEnvironment(zoo, space = null) {
   group.add(gate);
 
   const gatePosts = mergeGeometries([
-    place(cyl(0.14, 0.16, 2.1, {}, 7), { pos: [-LAYOUT.gate.width / 2, 1.05, 0] }),
-    place(cyl(0.14, 0.16, 2.1, {}, 7), { pos: [LAYOUT.gate.width / 2, 1.05, 0] }),
-    box(LAYOUT.gate.width + 0.5, 0.22, 0.2, { pos: [0, 2.05, 0] }),
-    // A little carved sign over the arch.
-    box(1.5, 0.42, 0.1, { pos: [0, 2.42, 0] }),
+    box(0.3, 2.1, 0.3, { pos: [-LAYOUT.gate.width / 2, 1.05, 0] }),
+    box(0.3, 2.1, 0.3, { pos: [LAYOUT.gate.width / 2, 1.05, 0] }),
+    // Round finials, like a cottage gatepost.
+    place(cyl(0.12, 0.12, 0.06, {}, 8), { pos: [-LAYOUT.gate.width / 2, 2.13, 0] }),
+    place(cyl(0.12, 0.12, 0.06, {}, 8), { pos: [LAYOUT.gate.width / 2, 2.13, 0] }),
   ]);
-  gate.add(ink.draw(gatePosts, color('bark').clone(), { width: 0.03 }));
+  gate.add(ink.draw(gatePosts, color('picket').clone(), { width: 0.03 }));
+  // A little red-roofed arch over the gate, the island's one bold colour.
+  const roofGeo = mergeGeometries([
+    box(LAYOUT.gate.width + 0.9, 0.12, 0.7, { pos: [0, 2.48, 0.12], rot: [0, 0, 0.0] }),
+    box((LAYOUT.gate.width + 0.9) / 2 + 0.1, 0.12, 0.72, { pos: [-(LAYOUT.gate.width + 0.9) / 4, 2.66, 0.12], rot: [0, 0, 0.32] }),
+    box((LAYOUT.gate.width + 0.9) / 2 + 0.1, 0.12, 0.72, { pos: [(LAYOUT.gate.width + 0.9) / 4, 2.66, 0.12], rot: [0, 0, -0.32] }),
+  ]);
+  gate.add(ink.draw(roofGeo, color('roof').clone(), { width: 0.03 }));
+  // The beam and sign board, in warm timber.
+  const signGeo = mergeGeometries([
+    box(LAYOUT.gate.width + 0.4, 0.2, 0.22, { pos: [0, 2.3, 0] }),
+    box(1.3, 0.38, 0.08, { pos: [0, 1.98, 0.14] }),
+  ]);
+  gate.add(ink.draw(signGeo, color('bark').clone(), { width: 0.026 }));
 
   /** Two doors on their own pivots, so `openGate` can swing them outward. */
   const doorGeoFor = (dir) => mergeGeometries([
@@ -287,10 +306,10 @@ export function buildEnvironment(zoo, space = null) {
 
   const doorL = new THREE.Group();
   doorL.position.set(-LAYOUT.gate.width / 2, 0, 0);
-  doorL.add(ink.draw(doorGeoFor(1), color('bark').clone(), { width: 0.024 }));
+  doorL.add(ink.draw(doorGeoFor(1), color('picket').clone(), { width: 0.024 }));
   const doorR = new THREE.Group();
   doorR.position.set(LAYOUT.gate.width / 2, 0, 0);
-  doorR.add(ink.draw(doorGeoFor(-1), color('bark').clone(), { width: 0.024 }));
+  doorR.add(ink.draw(doorGeoFor(-1), color('picket').clone(), { width: 0.024 }));
   gate.add(doorL, doorR);
 
   /* ----------------------------------------------------- wild beyond ----
@@ -323,7 +342,7 @@ export function buildEnvironment(zoo, space = null) {
     }
   }
   if (rockParts.length) {
-    group.add(ink.draw(mergeGeometries(rockParts), color('sand-deep').clone(), { width: 0.02 }));
+    group.add(ink.draw(mergeGeometries(rockParts), color('stone-deep').clone(), { width: 0.02 }));
   }
   const bushes = bushParts.length
     ? ink.draw(mergeGeometries(bushParts), color('grass-deep').clone(), { width: 0.025, wobble: 0.02 })
@@ -367,7 +386,7 @@ export function buildEnvironment(zoo, space = null) {
     wildMat.color.copy(seasonWild);
     pathColor.copy(seasonPath).lerp(color('earth'), messy * 0.4);
     pathMat.color.copy(pathColor);
-    pathMat.opacity = 0.96 - messy * 0.1;
+
   }
 
   zoo.onFrame((dt, elapsed) => {

@@ -86,11 +86,36 @@ js/
 
 ### The parts worth knowing about
 
-**The ink line** (`zoo/inkline.js`). Every solid object wears a second, larger
-copy of itself rendered inside-out — an inverted hull, because WebGL caps
-`lineWidth` at 1px on nearly every driver and real strokes would come out thin
-and sickly. Body and hull share one vertex-wobble shader, so the silhouette
-dances as a single drawing instead of the ink sliding off the animal.
+**The look** (`zoo/inkline.js`, `zoo/geom.js`). Every solid object is a
+smooth, round shape on a shallow toon ramp — soft plush animals with blush
+cheeks, round trees and cedars, a white picket fence — with no ink lines. The
+outline hull from the sketch era is still built but switched off
+(`Ink.outlines`). Settings → Graphics offers a Retro mode that renders at a
+fixed ~380 lines and upscales with hard pixels.
+
+**Liquid glass** (`zoo/glass.js`). The HUD panes are glass over the live
+world. The shader is a port of
+[liquid-glass-js](https://github.com/dashersw/liquid-glass-js) with its default
+parameters; the library itself refracts a one-time html2canvas snapshot, which
+cannot show a moving WebGL scene, so here the zoo renders to a texture and one
+final pass composites every pane, reading their positions from the DOM each
+frame. Without WebGL the panes fall back to CSS frost.
+
+**Borrowed from the gamedev library list** (all ported to plain JS, no build):
+- `zoo/pathfind.js` — Jump Point Search after [fgenesis/jps](https://github.com/fgenesis/jps)
+  (Unlicense), with string-pulling. Animals stroll across the zoo and route
+  round rocks, bushes and decorations instead of walking into them.
+- `zoo/audio.js` — spatial sound through
+  [Resonance Audio](https://github.com/resonance-audio/resonance-audio-web-sdk)
+  (Apache-2.0, vendored in `vendor/`). Every sound is synthesised: breeze,
+  birdsong from the trees, each species' call, a release chime, coin plinks.
+  Off by default; Profile → Settings → Sound.
+- `zoo/spring.js` — damped springs after
+  [google/motive](https://github.com/google/motive) (Apache-2.0): animals pop
+  in with an overshoot, squash on every hop and footfall, and boing when picked.
+
+**No emoji** (`ui/icons.js`). Every emoji the data layer still carries is
+mapped to a line icon at render time; avatars are an initial on a colour swatch.
 
 **Zoo health** (`model.js`). One number, derived from how many tasks are open,
 how old they are, and how overdue. It drives clutter count, grass density and

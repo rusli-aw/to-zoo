@@ -15,8 +15,9 @@ import {
 } from '../store.js';
 import { confirmDialog } from './dialog.js';
 import { toast } from './toast.js';
+import { AVATAR_SWATCHES, avatarMark, glyph } from './icons.js';
 
-const AVATARS = ['🌿', '🦒', '🐆', '🦓', '🪶', '🌾', '🦩', '🐘'];
+const AVATARS = ['default', ...AVATAR_SWATCHES];
 
 /** Unlocked purely by play; each one names the behaviour it rewards. */
 function achievements(state) {
@@ -64,7 +65,7 @@ export function renderProfileView(root, ctx) {
   root.innerHTML = `
     <section class="profile-head">
       <button class="profile-avatar" type="button" data-avatar
-              aria-label="Change your avatar">${state.user.avatar}</button>
+              aria-label="Change your avatar colour">${avatarMark(state.user.name, state.user.avatar)}</button>
       <label class="field profile-name">
         <span class="field__label">Name</span>
         <input class="field__input" type="text" value="${escapeAttr(state.user.name)}"
@@ -100,7 +101,7 @@ export function renderProfileView(root, ctx) {
       <h3 class="block-title">Released by size</h3>
       <ul class="by-type">
         ${ANIMAL_ORDER.map((type) => `
-          <li><span aria-hidden="true">${ANIMALS[type].emoji}</span>
+          <li><span aria-hidden="true">${glyph(ANIMALS[type].emoji)}</span>
               <span>${ANIMALS[type].plural}</span>
               <b>${counts[type]}</b></li>`).join('')}
       </ul>
@@ -111,7 +112,7 @@ export function renderProfileView(root, ctx) {
       <ul class="badges">
         ${list.map((a) => `
           <li class="badge${a.got ? ' is-got' : ''}">
-            <span class="badge__emoji" aria-hidden="true">${a.emoji}</span>
+            <span class="badge__emoji" aria-hidden="true">${glyph(a.emoji)}</span>
             <span class="badge__name">${a.name}</span>
             <span class="badge__hint">${a.got ? 'Unlocked' : a.hint}</span>
           </li>`).join('')}
@@ -140,6 +141,27 @@ export function renderProfileView(root, ctx) {
                     aria-checked="${state.settings.motion === v}"
                     class="${state.settings.motion === v ? 'is-on' : ''}">${
                       v === 'system' ? 'Auto' : v === 'full' ? 'Full' : 'Reduced'}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="setting">
+        <div><b>Graphics</b><span>Retro draws the zoo in chunky pixels, like an old handheld.</span></div>
+        <div class="segmented" role="radiogroup" aria-label="Graphics">
+          ${['smooth', 'retro'].map((v) => `
+            <button type="button" role="radio" data-graphics-opt="${v}"
+                    aria-checked="${state.settings.graphics === v}"
+                    class="${state.settings.graphics === v ? 'is-on' : ''}">${
+                      v === 'retro' ? 'Retro' : 'Smooth'}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="setting">
+        <div><b>Sound</b><span>Birdsong, a breeze, and the animals' little calls, placed around you in 3D.</span></div>
+        <div class="segmented" role="radiogroup" aria-label="Sound">
+          ${[false, true].map((v) => `
+            <button type="button" role="radio" data-sound-opt="${v}"
+                    aria-checked="${!!state.settings.sound === v}"
+                    class="${!!state.settings.sound === v ? 'is-on' : ''}">${v ? 'On' : 'Off'}</button>`).join('')}
         </div>
       </div>
 
@@ -176,6 +198,20 @@ export function renderProfileView(root, ctx) {
   for (const button of root.querySelectorAll('[data-motion-opt]')) {
     button.addEventListener('click', () => {
       setSetting('motion', button.dataset.motionOpt);
+      window.dispatchEvent(new CustomEvent('to-zoo:preferences'));
+    });
+  }
+
+  for (const button of root.querySelectorAll('[data-sound-opt]')) {
+    button.addEventListener('click', () => {
+      setSetting('sound', button.dataset.soundOpt === 'true');
+      window.dispatchEvent(new CustomEvent('to-zoo:preferences'));
+    });
+  }
+
+  for (const button of root.querySelectorAll('[data-graphics-opt]')) {
+    button.addEventListener('click', () => {
+      setSetting('graphics', button.dataset.graphicsOpt);
       window.dispatchEvent(new CustomEvent('to-zoo:preferences'));
     });
   }

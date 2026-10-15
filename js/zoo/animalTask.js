@@ -19,6 +19,7 @@ import { urgency as urgencyOf, isOverdue, mood as moodOf, moodStage } from '../m
 import { createAnimal } from './animals.js';
 import { hashString, rng } from './geom.js';
 import { LAYOUT } from './environment.js';
+import { createPathfinder } from './pathfind.js';
 
 /** Hand-placed so the arrangement looks composed rather than gridded. */
 const SLOTS = {
@@ -61,6 +62,7 @@ export function createPopulation(zoo, space) {
   let cosmetic = null;
 
   const tmp = new THREE.Vector3();
+  const paths = createPathfinder(space);
 
   function slotFor(type, index, seed) {
     const list = SLOTS[type];
@@ -107,6 +109,8 @@ export function createPopulation(zoo, space) {
       home,
       /** Where it is currently ambling toward. */
       target: new THREE.Vector3(home.x, 0, home.z),
+      /** Waypoints still to walk, from the pathfinder; the target is the last. */
+      path: [],
       dwell: rng(hashString(task.id) + 7)() * 4,
       state: 'idle',
     };
@@ -121,21 +125,42 @@ export function createPopulation(zoo, space) {
     && z > LAYOUT.minZ + 1.1 && z < LAYOUT.maxZ - 0.9
   );
 
-  /** Pick a wander target that is in bounds and not already occupied. */
+  /**
+   * Pick a wander target that is in bounds and not already occupied, and plan
+   * a route to it round the rocks, bushes and decorations. Now and then the
+   * target is anywhere in the zoo rather than near home — a proper stroll
+   * across the enclosure, which only works because the route goes round
+   * things instead of through them.
+   */
   function pickTarget(entry, reach, tries = 6) {
     const { home, animal } = entry;
+    const pos = animal.root.position;
+    const roam = Math.random() < 0.3;
     for (let i = 0; i < tries; i += 1) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = reach * (0.35 + Math.random() * 0.65);
-      const x = home.x + Math.cos(angle) * dist;
-      const z = home.z + Math.sin(angle) * dist;
+      let x;
+      let z;
+      if (roam) {
+        x = LAYOUT.minX + 1 + Math.random() * (LAYOUT.maxX - LAYOUT.minX - 2);
+        z = LAYOUT.minZ + 1.3 + Math.random() * (LAYOUT.maxZ - LAYOUT.minZ - 2.4);
+      } else {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = reach * (0.35 + Math.random() * 0.65);
+        x = home.x + Math.cos(angle) * dist;
+        z = home.z + Math.sin(angle) * dist;
+      }
       if (!inBounds(x, z)) continue;
       if (!space.isFree(x, z, animal.radius, entry.task.id, -0.15)) continue;
+      const route = paths.find(pos, { x, z }, animal.radius * 0.8, entry.task.id);
+      if (!route) continue;
       entry.target.set(x, 0, z);
+      entry.path = route;
+      // A long stroll ends somewhere new: that becomes home for a while.
+      if (roam) { home.x = x; home.z = z; }
       return true;
     }
     // Nowhere free nearby — stay put rather than walk into something.
-    entry.target.set(animal.root.position.x, 0, animal.root.position.z);
+    entry.target.set(pos.x, 0, pos.z);
+    entry.path = [];
     return false;
   }
 
@@ -164,9 +189,14 @@ export function createPopulation(zoo, space) {
       }
     }
 
-    tmp.subVectors(entry.target, pos);
-    tmp.y = 0;
-    const dist = tmp.length();
+    // Walk the route one waypoint at a time; the last one is the target.
+    while (entry.path.length > 1 && Math.hypot(entry.path[0].x - pos.x, entry.path[0].z - pos.z) < 0.25) {
+      entry.path.shift();
+    }
+    const next = entry.path[0] ?? entry.target;
+    tmp.set(next.x - pos.x, 0, next.z - pos.z);
+    const toEnd = Math.hypot(entry.target.x - pos.x, entry.target.z - pos.z);
+    const dist = entry.path.length > 1 ? Math.max(tmp.length(), toEnd) : tmp.length();
 
     if (dist > 0.05) {
       const speed = animal.spec.speed * (u > 0.72 ? 0.85 : 0.42);
@@ -273,6 +303,13 @@ export function createPopulation(zoo, space) {
     unreserve(taskId) { reserved.delete(taskId); },
 
     get(taskId) { return entries.get(taskId) ?? null; },
+
+    /** Where every animal is, for the sound layer. */
+    positions() {
+      return [...entries.values()].map((e) => ({
+        type: e.task.animalType, x: e.animal.root.position.x, z: e.animal.root.position.z,
+      }));
+    },
     all() { return [...entries.values()]; },
     count() { return entries.size; },
 

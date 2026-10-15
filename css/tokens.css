@@ -1,10 +1,11 @@
 /* ============================================================
    To-Zoo — design tokens
 
-   Safari at golden hour, drawn by hand. Warm paper grounds,
-   earthy greens, sand and muted ochre. The only saturated
-   colour in the system is reserved for urgency, so when an
-   elephant goes overdue it becomes the loudest thing on screen.
+   A storybook spread on cream parchment. The interface is quiet:
+   Inter on cream and liquid glass over the world, one near-black
+   pill for the serious action. The world is cozy rather than
+   loud — clear greens, a soft blue sky, no ink lines — so the
+   whole thing feels like a slow afternoon, not a party.
 
    The 3D world reads its colours from these same variables
    (see js/zoo/palette.js). Only the interface tokens flip in
@@ -21,90 +22,118 @@
 :root {
   color-scheme: light;
 
-  /* --- grounds: warm off-white paper --- */
-  --paper:        #f8f3e8;
-  --paper-sunk:   #efe6d5;
-  --surface:      #fffdf8;
-  --surface-2:    #f5eddd;
-  --surface-3:    #ece0ca;
-  --line:         #e3d7c1;
-  --line-strong:  #c9b797;
+  /* --- grounds: cream parchment, defined by hairlines not shadows --- */
+  --paper:        #fbfaf9;   /* cream canvas */
+  --paper-sunk:   #f2f0ed;   /* stone surface */
+  --surface:      #ffffff;
+  --surface-2:    #f6f4ef;   /* sand */
+  --surface-3:    #f2f0ed;
+  --line:         #f2f0ed;
+  --line-strong:  #e5d5c3;   /* stone border */
 
   /* --- ink: warm near-black, never pure --- */
-  --ink:          #2f2a21;
-  --ink-muted:    #6d6152;
-  --ink-faint:    #94856f;
-  --ink-invert:   #fffdf8;
+  --ink:          #343433;   /* heading charcoal */
+  --ink-muted:    #474645;   /* body brown */
+  --ink-faint:    #7e7e7d;
+  --ink-invert:   #fbfaf9;
   /* Outlines are drawn ink, not UI text: they stay dark in every theme.
      Binding them to --ink turned every line in the zoo near-white at dusk. */
-  --outline:      #2b261e;
+  --outline:      #7a6252;
   /* Woven white. Like --outline, it is a material colour rather than a UI
      role, so it must not follow the theme — a white udeng that turned brown
      after sunset would just look like a mistake. */
-  --cloth:        #f7f3e9;
-  --ivory:        #efe7d6;   /* tusks. Warm, and never a UI surface. */
+  --cloth:        #fffaf2;
+  --ivory:        #fff6e4;   /* tusks. Warm, and never a UI surface. */
 
-  /* --- the savanna --- */
-  --grass:        #8cae63;
-  --grass-deep:   #6c8d4f;
-  --grass-lush:   #9dc172;
-  --grass-dry:    #c2b77c;
-  --sand:         #e8d6b0;
-  --sand-deep:    #c4ab7f;
-  --earth:        #9c7a52;
-  --earth-deep:   #6b4f34;
-  --bark:         #7a5b3d;
+  /* --- the island: a clear, sunny meadow --- */
+  --grass:        #8ccd68;
+  --grass-deep:   #5fa552;
+  --grass-lush:   #99d472;
+  --grass-dry:    #cfd086;
+  --sand:         #f3e2b8;
+  --sand-deep:    #dfc790;
+  --earth:        #c97a45;
+  --earth-deep:   #96603a;
+  --bark:         #9a6b48;
+  --stone:        #d8dad4;   /* stepping-stone path */
+  --stone-deep:   #b6bcb6;
+  --picket:       #fffaf0;   /* the white picket fence */
+  --blush:        #ff8f9e;   /* cheeks */
+  /* Meadow flowers: clear colours, never neon. */
+  --flower-pink:   #f490b2;
+  --flower-yellow: #f7cf4a;
+  --flower-lilac:  #b597ef;
+  --flower-peach:  #f7a174;
+  --roof:         #e0705f;   /* red roof tiles, gate sign */
 
   /* --- sky and water --- */
-  --sky-high:     #9fd0ea;
-  --sky-low:      #e6f2ee;
-  --water:        #72b3c9;
-  --water-deep:   #5b8496;
+  --sky-high:     #62b9f0;
+  --sky-low:      #e2f2fb;
+  --water:        #9fd6ea;
+  --water-deep:   #6fb3d2;
   /* The summer sea. Separate from --water, which the decorations use. */
-  --sea-shallow:  #4fd0c4;
-  --sea:          #1f93c4;
-  --sea-deep:     #155a96;
-  --foam:         #f4faf8;
+  --sea-shallow:  #9fe3d8;
+  --sea:          #76c2e2;
+  --sea-deep:     #5a9fcc;
+  --foam:         #fffdf8;
   /* The sky wash behind shop and card art. A UI role, so it flips. */
-  --art-sky:      var(--sky-low);
+  --art-sky:      #f2f0ed;
 
   /* --- animal identity: the size hierarchy is a colour hierarchy too --- */
-  --elephant:     #8d8a94;
-  --elephant-bg:  #eae8ec;
-  --lion:         #c9964a;
-  --lion-bg:      #f7ebd6;
-  --rabbit:       #d9d2c8;
-  --rabbit-ear:   #c8a89c;
-  --rabbit-bg:    #f4efe6;
+  --elephant:     #9eacce;
+  --elephant-bg:  #eef1f8;
+  --lion:         #f2b45a;
+  --lion-bg:      #fff3dd;
+  --rabbit:       #fffaf3;
+  --rabbit-ear:   #f5a9ba;
+  --rabbit-bg:    #fdf3f6;
+
+  /* --- confetti: the storybook accents (UI art only; the world uses the flower tokens) --- */
+  --confetti-blue:   #64c6ff;
+  --confetti-yellow: #ffcd6c;
+  --confetti-green:  #00c978;
+  --confetti-orange: #ff3e00;
+  --confetti-pink:   #ff58ae;
+  --confetti-violet: #9f4fff;
 
   /* --- state --- */
-  --accent:       #b9702f;   /* tokens, primary action, the ochre thread */
-  --accent-soft:  #f7e6d2;
-  --accent-deep:  #94571f;
-  --on-accent:    #fffdf8;
+  /* The one serious action: near-black pills. */
+  --action:       #121212;
+  --action-hover: #000000;
+  --on-action:    #fbfaf9;
 
-  --thrive:       #4f7a45;   /* healthy zoo, completed, streaks */
-  --thrive-soft:  #e3eddd;
-  --caution:      #9a7020;   /* due soon */
-  --caution-soft: #f9edd0;
-  --overdue:      #a8452e;   /* the only red in the system */
-  --overdue-soft: #f7ded5;
+  /* Tokens and rewards: honey and gold. */
+  --accent:       #ffbb26;   /* honey */
+  --accent-soft:  #fff3d6;
+  --accent-deep:  #b77a00;   /* gold, darkened for text contrast */
+  --on-accent:    #121212;
 
-  --focus:        #2f6ea8;
+  --link:         #ff3e00;   /* ember: inline links and callouts */
+
+  --thrive:       #00995a;   /* healthy zoo, completed, streaks */
+  --thrive-soft:  #e0f7ea;
+  --caution:      #b77a00;   /* due soon */
+  --caution-soft: #fff3d6;
+  --overdue:      #e0202f;   /* the only red in the system */
+  --overdue-soft: #ffe4e6;
+
+  --focus:        #0086fc;
 
   /* --- typography --- */
-  --font-display: "Fraunces", Georgia, "Iowan Old Style", Palatino, serif;
-  --font-body:    "Outfit", ui-sans-serif, system-ui, -apple-system,
+  /* "Family" is not public; Bricolage Grotesque at 500 is the closest
+     free face — slightly condensed, slightly playful. */
+  --font-display: "Bricolage Grotesque", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "Inter", ui-sans-serif, system-ui, -apple-system,
                   "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono:    ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 
-  --step--2: clamp(.69rem, .67rem + .1vw, .75rem);
-  --step--1: clamp(.81rem, .78rem + .14vw, .89rem);
-  --step-0:  clamp(.94rem, .91rem + .17vw, 1.05rem);
-  --step-1:  clamp(1.13rem, 1.07rem + .28vw, 1.31rem);
-  --step-2:  clamp(1.35rem, 1.25rem + .46vw, 1.64rem);
-  --step-3:  clamp(1.62rem, 1.47rem + .72vw, 2.05rem);
-  --step-4:  clamp(1.94rem, 1.71rem + 1.1vw, 2.56rem);
+  --step--2: clamp(.72rem, .7rem + .1vw, .75rem);      /* 12 */
+  --step--1: clamp(.81rem, .79rem + .1vw, .875rem);    /* 13-14 */
+  --step-0:  clamp(.94rem, .92rem + .12vw, 1.0625rem); /* 15-17 */
+  --step-1:  clamp(1.13rem, 1.1rem + .2vw, 1.1875rem); /* 19 */
+  --step-2:  clamp(1.3rem, 1.24rem + .3vw, 1.4375rem); /* 23 */
+  --step-3:  clamp(1.75rem, 1.5rem + 1.1vw, 2.75rem);  /* 44 */
+  --step-4:  clamp(2.25rem, 1.8rem + 2vw, 4.25rem);    /* 68 */
 
   /* --- space: 4px base, named by intent --- */
   --sp-1: 4px;
@@ -116,20 +145,24 @@
   --sp-7: 48px;
   --sp-8: 64px;
 
-  /* --- form: everything is rounded, nothing is a circle by accident --- */
-  --radius-xs: 8px;
-  --radius-sm: 12px;
-  --radius:    18px;
-  --radius-lg: 26px;
-  --radius-xl: 34px;
-  --radius-pill: 999px;
+  /* --- form: 10px cards, pills for buttons and badges --- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius:    10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 9999px;
 
-  /* --- depth: soft and warm, never grey --- */
-  --shadow-xs:  0 1px 2px rgba(47, 42, 33, .05);
-  --shadow-sm:  0 1px 2px rgba(47, 42, 33, .05), 0 3px 8px rgba(47, 42, 33, .05);
-  --shadow:     0 1px 2px rgba(47, 42, 33, .04), 0 8px 24px rgba(47, 42, 33, .09);
-  --shadow-lg:  0 2px 4px rgba(47, 42, 33, .05), 0 20px 48px rgba(47, 42, 33, .14);
-  --shadow-pop: 0 12px 36px rgba(185, 112, 47, .28);
+  /* --- depth: pressed into paper. Hairline insets first; the only drops
+     are the faint ones that keep panels legible over the 3D world. --- */
+  --glass-tint: #fffdf8;     /* read by js/zoo/glass.js */
+  --glass-edge: inset 0 0 0 1px rgba(255, 255, 255, .55);
+  --hairline:   inset 0 0 0 1px var(--line);
+  --shadow-xs:  inset 0 0 0 1px rgba(0, 0, 0, .04);
+  --shadow-sm:  inset 0 0 0 1px rgba(0, 0, 0, .04), 0 1px 6px rgba(0, 0, 0, .04);
+  --shadow:     inset 0 0 0 1px rgba(0, 0, 0, .04), 0 1px 6px rgba(0, 0, 0, .04), 0 0 24px rgba(0, 0, 0, .05);
+  --shadow-lg:  0 0 24px rgba(0, 0, 0, .15);
+  --shadow-pop: 0 0 24px rgba(0, 0, 0, .15);
 
   /* --- motion: sparing, and all of it answerable to one switch --- */
   --ease-out:    cubic-bezier(.22, 1, .36, 1);
@@ -150,48 +183,57 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --paper:        #231d18;
-  --paper-sunk:   #1a1511;
-  --surface:      #2d251f;
-  --surface-2:    #372e26;
-  --surface-3:    #43382e;
-  --line:         #47392e;
-  --line-strong:  #66543f;
+  --paper:        #121212;
+  --paper-sunk:   #000000;
+  --surface:      #1c1c1b;
+  --surface-2:    #242423;
+  --surface-3:    #2e2e2d;
+  --line:         #2e2e2d;
+  --line-strong:  #474645;
 
-  --ink:          #f2e9db;
-  --ink-muted:    #b6a795;
-  --ink-faint:    #8d7f6d;
-  --ink-invert:   #191410;
-  --outline:      #120e0a;
-  --cloth:        #ece7db;
-  --ivory:        #ded4c0;
+  --ink:          #fbfaf9;
+  --ink-muted:    #d6d4d0;
+  --ink-faint:    #9a9997;
+  --ink-invert:   #121212;
+  --outline:      #5c4a3e;
+  --cloth:        #f4efe4;
+  --ivory:        #efe4cc;
 
   /* No savanna, sky, water or animal overrides here: the moon does night. */
-  --art-sky:      #2f3a44;
+  --art-sky:      #242423;
 
-  --elephant-bg:  #2b2830;
-  --lion-bg:      #33281a;
-  --rabbit-bg:    #2e2922;
+  --elephant-bg:  #23262e;
+  --lion-bg:      #2e2618;
+  --rabbit-bg:    #2c2427;
 
-  --accent:       #d98c45;
-  --accent-soft:  #3a281a;
-  --accent-deep:  #f0a862;
-  --on-accent:    #191410;
+  --action:       #fbfaf9;
+  --action-hover: #ffffff;
+  --on-action:    #121212;
 
-  --thrive:       #7aa96c;
-  --thrive-soft:  #24301f;
-  --caution:      #d4a84a;
-  --caution-soft: #332912;
-  --overdue:      #d4694e;
-  --overdue-soft: #3a2019;
+  --accent:       #ffbb26;
+  --accent-soft:  #33290f;
+  --accent-deep:  #ffcd6c;
+  --on-accent:    #121212;
 
-  --focus:        #7cb2e8;
+  --link:         #ff7a4d;
 
-  --shadow-xs:  0 1px 2px rgba(0, 0, 0, .3);
-  --shadow-sm:  0 1px 2px rgba(0, 0, 0, .3), 0 3px 8px rgba(0, 0, 0, .25);
-  --shadow:     0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
-  --shadow-lg:  0 2px 4px rgba(0, 0, 0, .35), 0 20px 48px rgba(0, 0, 0, .5);
-  --shadow-pop: 0 12px 36px rgba(217, 140, 69, .3);
+  --thrive:       #2fdc8e;
+  --thrive-soft:  #0f2b1e;
+  --caution:      #ffcd6c;
+  --caution-soft: #33290f;
+  --overdue:      #ff5a66;
+  --overdue-soft: #3a1418;
+
+  --focus:        #64c6ff;
+
+  --glass-tint: #1c1c1b;
+  --glass-edge: inset 0 0 0 1px rgba(255, 255, 255, .12);
+  --hairline:   inset 0 0 0 1px var(--line);
+  --shadow-xs:  inset 0 0 0 1px rgba(255, 255, 255, .06);
+  --shadow-sm:  inset 0 0 0 1px rgba(255, 255, 255, .06), 0 1px 6px rgba(0, 0, 0, .3);
+  --shadow:     inset 0 0 0 1px rgba(255, 255, 255, .06), 0 2px 12px rgba(0, 0, 0, .35);
+  --shadow-lg:  0 0 24px rgba(0, 0, 0, .5);
+  --shadow-pop: 0 0 24px rgba(0, 0, 0, .5);
 }
 
 /* ---------- one switch for motion ----------

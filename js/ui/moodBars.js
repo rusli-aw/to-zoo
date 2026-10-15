@@ -14,6 +14,7 @@
 
 import * as THREE from 'three';
 import { ANIMALS, mood as moodOf, moodStage } from '../model.js';
+import { glyph } from './icons.js';
 
 export function createMoodBars(zoo, population) {
   const host = document.createElement('div');
@@ -76,7 +77,7 @@ export function createMoodBars(zoo, population) {
         bar.shown = value;
         bar.fill.style.width = `${value}%`;
         bar.el.dataset.stage = stage.key;
-        bar.face.textContent = stage.emoji;
+        bar.face.innerHTML = glyph(stage.emoji);
         bar.el.title = `${ANIMALS[entry.task.animalType].label}: ${entry.task.title} — ${stage.label} ${value}%`;
       }
 

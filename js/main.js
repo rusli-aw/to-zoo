@@ -11,6 +11,7 @@ import { ZooScene } from './zoo/scene.js';
 import { buildEnvironment } from './zoo/environment.js';
 import { buildGrass } from './zoo/grass.js';
 import { buildFence } from './zoo/fence.js';
+import { createAudio } from './zoo/audio.js';
 import { createSpace } from './zoo/space.js';
 import { createDaylight, clockIsNight } from './zoo/daylight.js';
 import { buildSeasons } from './zoo/seasons.js';
@@ -118,6 +119,7 @@ async function boot() {
   }
 
   zoo.setReducedMotion(prefs.reduced);
+  zoo.setRetro(getState().settings.graphics === 'retro');
 
   // One register of who is standing where. Built before anything that
   // occupies ground, because every one of them reports into it.
@@ -152,6 +154,17 @@ async function boot() {
   const population = createPopulation(zoo, space);
   const release = createRelease(zoo, population, environment);
   const hud = createHud({ onFocusTask: focusTask });
+
+  const audio = createAudio(zoo, {
+    treeSpots: () => seasons.group.children.at(-1)?.userData.treeSpots ?? [],
+    animals: () => population.positions(),
+  });
+  // Sound needs a user gesture. If it was left on, the first click starts it.
+  if (getState().settings.sound) {
+    window.addEventListener('pointerdown', () => {
+      if (getState().settings.sound) audio.setEnabled(true);
+    }, { once: true });
+  }
 
   const picking = createPicking(zoo, population, { onSelect: openTask });
   const moodBars = createMoodBars(zoo, population);
@@ -220,6 +233,11 @@ async function boot() {
     // thing it describes are the same object on screen.
     const point = population.anchorOf(taskId, anchor);
     if (point) zoo.focusOn(point);
+    const picked = population.get(taskId);
+    if (picked) {
+      picked.animal.boing();
+      audio.call(task.animalType, picked.animal.root.position.x, picked.animal.root.position.z);
+    }
     picking.setSuspended(true);
 
     openTaskPanel(task, {
@@ -272,9 +290,16 @@ async function boot() {
     zoo.focusOn(null);
     setSkipVisible(true);
 
+    const leaving = population.get(task.id);
+    if (leaving) {
+      leaving.animal.boing(1.3);
+      audio.release(leaving.animal.root.position.x, leaving.animal.root.position.z);
+    }
+
     const handle = release.release(task.id, {
       onExit(screen) {
         flyTokens(screen, reward.total, () => {
+          audio.coins(Math.ceil(reward.total / 8));
           tokensInFlight = false;
           hud.releaseTokens(getState());
         });
@@ -345,7 +370,7 @@ async function boot() {
         emoji: '\u{1F437}',
         tone: 'warn',
         parts: result.ledger.slice(0, 4).map((row) => ({
-          label: `${ANIMALS[row.animalType].emoji} ${row.title}`,
+          label: `${ANIMALS[row.animalType].label}: ${row.title}`,
           amount: -row.amount,
         })),
         total: -result.total,
@@ -467,6 +492,8 @@ async function boot() {
     daylight.setMode(next.mode);
     repaintTheme();
     zoo.setReducedMotion(document.documentElement.dataset.motion === 'reduced');
+    zoo.setRetro(getState().settings.graphics === 'retro');
+    audio.setEnabled(!!getState().settings.sound);
   });
 
   // A tab left open across midnight should still settle up when you return to

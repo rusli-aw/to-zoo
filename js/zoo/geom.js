@@ -98,26 +98,34 @@ export function place(geometry, t = {}) {
 
 /* ------------------------------------------------------------- shapes --- */
 
+/**
+ * The island look is round and toy-like rather than faceted, so every curved
+ * primitive asks for more segments than its caller wrote. Callers kept their
+ * old low counts; this one number decides how smooth the world is.
+ */
+export const ROUND = 2;
+const segs = (n, min = 3) => Math.max(min, Math.round(n * ROUND));
+
 export const box = (w, h, d, t) => place(new THREE.BoxGeometry(w, h, d), t);
 
 export const sphere = (r, t, seg = 10) =>
-  place(new THREE.SphereGeometry(r, seg, Math.max(6, Math.round(seg * 0.7))), t);
+  place(new THREE.SphereGeometry(r, segs(seg), Math.max(6, Math.round(segs(seg) * 0.6))), t);
 
 export const cyl = (rTop, rBottom, h, t, seg = 8) =>
-  place(new THREE.CylinderGeometry(rTop, rBottom, h, seg), t);
+  place(new THREE.CylinderGeometry(rTop, rBottom, h, segs(seg)), t);
 
 export const cone = (r, h, t, seg = 8) =>
-  place(new THREE.ConeGeometry(r, h, seg), t);
+  place(new THREE.ConeGeometry(r, h, segs(seg)), t);
 
 export const plane = (w, h, t, segW = 1, segH = 1) =>
   place(new THREE.PlaneGeometry(w, h, segW, segH), t);
 
 /**
  * A squashed sphere — the workhorse for animal bodies, cloud puffs and tree
- * canopies. Low segment counts on purpose: the facets are the style.
+ * canopies. Segment counts are multiplied by ROUND so they read as soft toys.
  */
 export const blob = (r, squash, t, seg = 9) => {
-  const g = new THREE.SphereGeometry(r, seg, Math.max(5, Math.round(seg * 0.6)));
+  const g = new THREE.SphereGeometry(r, segs(seg), Math.max(5, Math.round(segs(seg) * 0.6)));
   const s = Array.isArray(squash) ? squash : [1, squash, 1];
   place(g, { scale: s });
   return place(g, t);

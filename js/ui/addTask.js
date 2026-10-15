@@ -16,6 +16,7 @@ import { ANIMAL_ORDER, ANIMALS, dueLabel, makeTask } from '../model.js';
 import { addTask as storeAddTask, updateTask as storeUpdateTask } from '../store.js';
 import { stripDatePhrase, suggestAnimal, toDateInput } from '../suggest.js';
 import { openDialog } from './dialog.js';
+import { glyph } from './icons.js';
 
 const QUICK_DATES = [
   { id: 'today', label: 'Today', days: 0 },
@@ -39,7 +40,7 @@ export function openAddTask(opts = {}) {
     return `
       <button class="animal-card" type="button" role="radio" aria-checked="false"
               data-animal="${type}">
-        <span class="animal-card__emoji" aria-hidden="true">${spec.emoji}</span>
+        <span class="animal-card__emoji" aria-hidden="true">${glyph(spec.emoji)}</span>
         <span class="animal-card__label">${spec.label}</span>
         <span class="animal-card__size">${spec.sizeWord}</span>
         <span class="animal-card__tag">${spec.tagline}</span>
@@ -160,8 +161,8 @@ export function openAddTask(opts = {}) {
         const spec = ANIMALS[result.animalType];
         suggestionEl.innerHTML = manualAnimal && result.animalType !== animalType
           ? `<span class="suggestion__dot"></span> We would have guessed
-             ${spec.emoji} ${escapeHtml(result.reason)}`
-          : `<span class="suggestion__dot"></span> ${spec.emoji}
+             ${glyph(spec.emoji)} ${escapeHtml(result.reason)}`
+          : `<span class="suggestion__dot"></span> ${glyph(spec.emoji)}
              ${escapeHtml(result.reason)}`;
       }
 

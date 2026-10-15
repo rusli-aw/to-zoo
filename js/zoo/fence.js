@@ -25,10 +25,10 @@ import { LAYOUT } from './environment.js';
  */
 export const FENCE_STYLES = {
   starter: {
-    id: 'starter', name: 'Starter fence', cost: 0,
-    blurb: 'Plain sawn timber. It does the job.',
-    token: 'bark', spacing: 2.4, postR: 0.09, postH: 1.05,
-    rails: [{ y: 0.78, h: 0.09, d: 0.06 }, { y: 0.45, h: 0.09, d: 0.06 }],
+    id: 'starter', name: 'Picket fence', cost: 0,
+    blurb: 'Cream-white pickets with pointed tops. Very island.',
+    token: 'picket', spacing: 0.34, postR: 0.1, postH: 0.82, postShape: 'picket',
+    rails: [{ y: 0.62, h: 0.08, d: 0.05, back: true }, { y: 0.24, h: 0.08, d: 0.05, back: true }],
   },
   safari: {
     id: 'safari', name: 'Safari fence', cost: 120,
@@ -72,6 +72,17 @@ function postGeometry(style, seed) {
   const h = style.postH + jitter;
 
   switch (style.postShape) {
+    case 'picket': {
+      // A flat board with a pointed top: a four-sided cone turned square to
+      // the board and squashed to its thickness.
+      const w = style.postR * 2;
+      const d = 0.05;
+      const tip = new THREE.ConeGeometry(w / Math.SQRT2, w * 0.7, 4);
+      place(tip, { rot: [0, Math.PI / 4, 0] });
+      place(tip, { scale: [1, 1, d / w] });
+      place(tip, { pos: [0, h + w * 0.35, 0] });
+      return mergeGeometries([box(w, h, d, { pos: [0, h / 2, 0] }), tip]);
+    }
     case 'block':
       return box(style.postR * 2, h, style.postR * 1.5, { pos: [0, h / 2, 0] });
     case 'turned':
@@ -147,14 +158,19 @@ function run(style, from, to, parts, seed) {
       const t = t0 + ((t1 - t0) * i) / bays;
       const x = from.x + dx * t;
       const z = from.z + dz * t;
-      parts.push(place(postGeometry(style, seed + i * 977), { pos: [x, 0, z] }));
+      parts.push(place(postGeometry(style, seed + i * 977), { pos: [x, 0, z], rot: [0, angle, 0] }));
     }
 
     const midX = from.x + dx * ((t0 + t1) / 2);
     const midZ = from.z + dz * ((t0 + t1) / 2);
+    // Rails marked `back` sit behind the boards (on the outside of the loop),
+    // the way a picket fence is nailed to its stringers.
+    const nx = dz / length;
+    const nz = -dx / length;
     for (const rail of style.rails) {
+      const off = rail.back ? 0.05 : 0;
       parts.push(box(spanLen, rail.h, rail.d, {
-        pos: [midX, rail.y, midZ],
+        pos: [midX + nx * off, rail.y, midZ + nz * off],
         rot: [0, angle, 0],
       }));
     }

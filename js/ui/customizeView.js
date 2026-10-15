@@ -15,6 +15,7 @@ import {
   buyItem, getState, placeItem, setSeason, shopItems, storeItem, unlock,
 } from '../store.js';
 import { toast } from './toast.js';
+import { artIcon, glyph } from './icons.js';
 
 let category = 'all';
 
@@ -56,7 +57,7 @@ export function renderCustomizeView(root, ctx) {
             <button class="season${on ? ' is-on' : ''}${owned ? '' : ' is-locked'}"
                     type="button" role="radio" aria-checked="${on}"
                     data-season="${id}" data-keep-focus="season-${id}">
-              <span class="season__emoji" aria-hidden="true">${season.emoji}</span>
+              <span class="season__emoji" aria-hidden="true">${glyph(season.emoji)}</span>
               <span class="season__name">${season.name}</span>
               <span class="season__blurb">${season.blurb}</span>
               <span class="season__foot">${
@@ -82,7 +83,7 @@ export function renderCustomizeView(root, ctx) {
       ${shown.map((item) => `
         <li class="shop-card${item.owned ? ' is-owned' : ''}${
               !item.owned && !item.affordable ? ' is-locked' : ''}">
-          <div class="shop-card__art" data-art="${item.build}" aria-hidden="true"></div>
+          <div class="shop-card__art" data-art="${item.build}" aria-hidden="true">${artIcon(item.build)}</div>
           <h3 class="shop-card__name">${escapeHtml(item.name)}</h3>
           <p class="shop-card__blurb">${escapeHtml(item.blurb)}</p>
           <div class="shop-card__foot">

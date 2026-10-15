@@ -23,6 +23,17 @@ import { reduced } from '../ui/motion.js';
  * `cost` of 0 means it is available from the start.
  */
 export const SEASONS = {
+  island: {
+    id: 'island', name: 'Island', emoji: '\u{1F3DD}\u{FE0F}', cost: 0,
+    blurb: 'Soft round trees, cedars, gentle hills and a few flowers.',
+    tree: 'island',
+    ground: 'grass', wild: 'grass-lush', path: 'stone',
+    canopy: '#79c05c', canopy2: '#4f9a55', trunk: 'bark',
+    hillColor: '#94cf74',
+    grassOutside: 1,
+    flowers: true,
+    weather: null,
+  },
   spring: {
     id: 'spring', name: 'Spring', emoji: '\u{1F338}', cost: 120,
     blurb: 'Cherry blossom, and petals on the wind.',
@@ -66,7 +77,7 @@ export const SEASONS = {
   },
 };
 
-export const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
+export const SEASON_ORDER = ['island', 'spring', 'summer', 'autumn', 'winter'];
 
 /**
  * The nearest the sea is ever allowed to come, in world z. The enclosure ends
@@ -88,6 +99,32 @@ function tree(kind, x, z, scale, r, out) {
   const h = (1.8 + r() * 2.2) * scale;
 
   switch (kind) {
+    case 'island': {
+      // The two island trees: a cedar of three stacked cones, or a hardwood
+      // with one fat round canopy on a short trunk.
+      if (r() < 0.45) {
+        const ch = h * 1.25;
+        out.trunks.push(place(cyl(0.12 * scale, 0.16 * scale, ch * 0.3, {}, 6), {
+          pos: [x, ch * 0.15, z],
+        }));
+        for (let i = 0; i < 3; i += 1) {
+          const rad = (1.15 - i * 0.3) * scale;
+          out.canopy2.push(place(new THREE.ConeGeometry(rad, ch * 0.42, 16), {
+            pos: [x, ch * (0.36 + i * 0.22), z],
+          }));
+        }
+      } else {
+        out.trunks.push(place(cyl(0.14 * scale, 0.2 * scale, h * 0.55, {}, 6), {
+          pos: [x, h * 0.275, z],
+        }));
+        out.canopy.push(blob(1.05 * scale, [1, 0.92, 1], { pos: [x, h * 0.55 + 0.8 * scale, z] }, 10));
+        out.canopy.push(blob(0.55 * scale, [1, 0.9, 1], {
+          pos: [x + 0.6 * scale, h * 0.55 + 0.5 * scale, z + 0.3 * scale],
+        }, 8));
+      }
+      break;
+    }
+
     case 'coconut': {
       // A palm: a trunk that leans and curves, with fronds radiating from the
       // very top and drooping at the ends.
@@ -482,6 +519,71 @@ function buildSea(zoo, world, sand) {
   return () => {};
 }
 
+/* ------------------------------------------------------------ flowers --- */
+
+const FLOWER_TOKENS = ['flower-pink', 'flower-yellow', 'flower-lilac', 'flower-peach', 'cloth'];
+
+/**
+ * Little five-petal flowers, scattered thick outside the fence and in a thin
+ * border just inside it. One instanced mesh with per-instance colour, so a
+ * meadow is a single draw call.
+ */
+function flowerField(zoo, r) {
+  const petals = [];
+  for (let i = 0; i < 5; i += 1) {
+    const a = (i / 5) * Math.PI * 2;
+    petals.push(blob(0.05, [1, 0.45, 1], { pos: [Math.cos(a) * 0.05, 0.075, Math.sin(a) * 0.05], rot: [0, -a, 0.35] }, 5));
+  }
+  petals.push(blob(0.032, [1, 0.7, 1], { pos: [0, 0.09, 0] }, 5));
+  const geometry = mergeGeometries(petals);
+
+  const material = new THREE.MeshToonMaterial({ color: 0xffffff });
+  const count = zoo.quality.grass > 1000 ? 170 : 90;
+  const mesh = new THREE.InstancedMesh(geometry, material, count);
+  mesh.raycast = () => {};
+  mesh.frustumCulled = false;
+
+  const dummy = new THREE.Object3D();
+  const tint = new THREE.Color();
+  let placed = 0;
+  for (let i = 0; i < count * 3 && placed < count; i += 1) {
+    const border = r() < 0.18;
+    let x;
+    let z;
+    if (border) {
+      // A strip just inside the fence, where animals rarely stand.
+      const side = Math.floor(r() * 3);
+      const t = r();
+      if (side === 0) { x = LAYOUT.minX + 0.35 + r() * 0.5; z = LAYOUT.minZ + t * (LAYOUT.maxZ - LAYOUT.minZ); }
+      else if (side === 1) { x = LAYOUT.maxX - 0.35 - r() * 0.5; z = LAYOUT.minZ + t * (LAYOUT.maxZ - LAYOUT.minZ); }
+      else { x = LAYOUT.minX + t * (LAYOUT.maxX - LAYOUT.minX); z = LAYOUT.minZ + 0.35 + r() * 0.5; }
+      if (Math.abs(x - LAYOUT.gate.x) < LAYOUT.gate.width && z < LAYOUT.minZ + 1) continue;
+    } else {
+      x = (r() - 0.5) * 70;
+      z = -40 + r() * 52;
+      const inside = x > LAYOUT.minX - 0.6 && x < LAYOUT.maxX + 0.6
+        && z > LAYOUT.minZ - 0.6 && z < LAYOUT.maxZ + 0.6;
+      if (inside) continue;
+      // Keep the walk out through the gate clear.
+      if (Math.abs(x) < 2.4 && z < LAYOUT.minZ) continue;
+    }
+    // Flowers grow in little clumps of one colour.
+    const clump = 1 + Math.floor(r() * 3);
+    const col = color(FLOWER_TOKENS[Math.floor(r() * FLOWER_TOKENS.length)]);
+    for (let k = 0; k < clump && placed < count; k += 1) {
+      dummy.position.set(x + (r() - 0.5) * 0.5, 0, z + (r() - 0.5) * 0.5);
+      dummy.rotation.set(0, r() * Math.PI * 2, 0);
+      dummy.scale.setScalar(1.1 + r() * 0.5);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(placed, dummy.matrix);
+      mesh.setColorAt(placed, tint.copy(col));
+      placed += 1;
+    }
+  }
+  mesh.count = placed;
+  return mesh;
+}
+
 /* --------------------------------------------------------------- build --- */
 
 /**
@@ -518,12 +620,12 @@ export function buildSeasons(zoo, environment) {
   }
 
   function build(id) {
-    const season = SEASONS[id] ?? SEASONS.summer;
+    const season = SEASONS[id] ?? SEASONS.island;
     teardown();
 
     const world = new THREE.Group();
     const r = rng(4801);
-    const parts = { trunks: [], canopy: [] };
+    const parts = { trunks: [], canopy: [], canopy2: [] };
 
     /* ---- hills ---- */
     // A flat horizon is the right horizon for a coast, so seasons can decline
@@ -543,7 +645,7 @@ export function buildSeasons(zoo, environment) {
     if (!hasHills) {
       for (const h of hills) h.dispose();
     } else {
-      world.add(zoo.ink.draw(mergeGeometries(hills), tone(season.wild), {
+      world.add(zoo.ink.draw(mergeGeometries(hills), tone(season.hillColor ?? season.wild), {
         width: 0.09, wobble: 0.02, shadow: false,
       }));
     }
@@ -575,6 +677,14 @@ export function buildSeasons(zoo, environment) {
       });
       world.add(canopyDraw);
     }
+    if (season.canopy2 && parts.canopy2.length) {
+      world.add(zoo.ink.draw(mergeGeometries(parts.canopy2), new THREE.Color(season.canopy2), {
+        width: 0.05, shadow: false,
+      }));
+    }
+
+    /* ---- flowers ---- */
+    if (season.flowers) world.add(flowerField(zoo, rng(2207)));
 
     /* ---- grass outside the fence ---- */
     // The wild used to be a bare plane, which read as a backdrop rather than a
@@ -655,7 +765,7 @@ export function buildSeasons(zoo, environment) {
     current = season.id;
   }
 
-  build('summer');
+  build('island');
 
   return {
     group,

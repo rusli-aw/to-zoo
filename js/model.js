@@ -470,7 +470,7 @@ export function makeUser(input = {}) {
   return {
     id: input.id ?? uid('user'),
     name: input.name ?? 'You',
-    avatar: input.avatar ?? '\u{1F33F}',
+    avatar: input.avatar ?? 'default',
     tokens: input.tokens ?? 0,
     streak: input.streak ?? 0,
     lastGoalDay: input.lastGoalDay ?? null,

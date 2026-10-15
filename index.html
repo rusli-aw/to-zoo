@@ -6,17 +6,17 @@
 <title>To-Zoo — an animal rescue for your to-do list</title>
 <meta name="description" content="A to-do list that lives in a small 3D animal rescue. Every unfinished task is an animal in your care; finish the task and the animal goes home.">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#f8f3e8">
+<meta name="theme-color" content="#fbfaf9">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..700,0..100,0..1&family=Outfit:wght@300..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..700&family=Inter:wght@400;500;600;700&display=swap">
 
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/components.css">
 
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F418;</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23343433' stroke-width='1.8' stroke-linecap='round'><path d='M7.5 6.6A3.6 3.6 0 1 0 6 13.4M16.5 6.6a3.6 3.6 0 1 1 1.5 6.8'/><circle cx='12' cy='10' r='5'/><path d='M12 15v2.5a2 2 0 0 0 3.2 1.6'/></svg>">
 
 <!-- One vendored file, resolved natively. No bundler, no install step. -->
 <script type="importmap">
@@ -215,7 +215,7 @@
     </button>
 
     <button class="avatar-btn" id="avatar-btn" type="button" aria-label="Your profile">
-      <span class="avatar" id="avatar">🌿</span>
+      <span class="avatar" id="avatar"></span>
       <span class="streak-pip" id="streak-pip" hidden></span>
     </button>
   </div>
@@ -232,7 +232,7 @@
       <div class="health__bar"><i id="health-fill" style="width:100%"></i></div>
       <div class="health__legend" id="health-legend"></div>
       <button class="neglect" id="neglect" type="button" hidden>
-        <span class="neglect__emoji" id="neglect-emoji" aria-hidden="true">🐘</span>
+        <span class="neglect__emoji" id="neglect-emoji" aria-hidden="true"></span>
         <span class="neglect__text">
           <span class="neglect__title" id="neglect-title"></span>
           <span class="neglect__wait" id="neglect-wait"></span>
@@ -252,20 +252,20 @@
   <!-- ── navigation ── -->
   <nav class="nav" id="nav" aria-label="Sections">
     <button class="nav__item is-active" data-view="zoo" type="button">
-      <span class="nav__icon" aria-hidden="true">🏞️</span><span class="nav__label">Zoo</span>
+      <span class="nav__icon" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3 20l6-9 4 5 3-4 5 8z"/><circle cx="16.5" cy="6" r="2"/></svg></span><span class="nav__label">Zoo</span>
     </button>
     <button class="nav__item" data-view="tasks" type="button">
-      <span class="nav__icon" aria-hidden="true">📋</span><span class="nav__label">Tasks</span>
+      <span class="nav__icon" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M3.5 6l1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></svg></span><span class="nav__label">Tasks</span>
       <span class="nav__badge" id="nav-badge" hidden></span>
     </button>
     <button class="nav__item" data-view="customize" type="button">
-      <span class="nav__icon" aria-hidden="true">🌻</span><span class="nav__label">Customize</span>
+      <span class="nav__icon" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="7" r="3"/><circle cx="17" cy="12" r="3"/><circle cx="12" cy="17" r="3"/><circle cx="7" cy="12" r="3"/><circle cx="12" cy="12" r="1.4"/></svg></span><span class="nav__label">Customize</span>
     </button>
     <button class="nav__item" data-view="friends" type="button">
-      <span class="nav__icon" aria-hidden="true">👋</span><span class="nav__label">Friends</span>
+      <span class="nav__icon" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="nav__label">Friends</span>
     </button>
     <button class="nav__item" data-view="profile" type="button">
-      <span class="nav__icon" aria-hidden="true">🌿</span><span class="nav__label">Profile</span>
+      <span class="nav__icon" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="nav__label">Profile</span>
     </button>
   </nav>
 

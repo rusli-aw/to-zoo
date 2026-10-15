@@ -8,6 +8,9 @@
  * the hull gives a fat, confident one instead, and it scales with the object,
  * which means a big animal is drawn with a bigger pen.
  *
+ * (Cozy restyle: bodies are soft-toon shaded with smooth normals and the pen
+ * is thin, warm brown and still. The machinery is unchanged.)
+ *
  * The dancing comes from a shared vertex displacement: two sine terms at
  * unrelated frequencies, offset per vertex by a random seed baked into the
  * geometry. Body and outline run the *same* wobble so the silhouette moves as
@@ -57,6 +60,24 @@ export function addSeeds(geometry) {
   return geometry;
 }
 
+let ramp = null;
+/**
+ * The light ramp every body shares. Linear-filtered and shallow — the shade
+ * side never drops much below three-quarters bright — so shapes read as soft
+ * plush under a hazy afternoon sun rather than hard-lit plastic.
+ */
+function toonRamp() {
+  if (ramp) return ramp;
+  const v = [178, 208, 238, 255];
+  const steps = new Uint8Array(v.flatMap((x) => [x, x, x, 255]));
+  ramp = new THREE.DataTexture(steps, v.length, 1, THREE.RGBAFormat);
+  ramp.minFilter = THREE.LinearFilter;
+  ramp.magFilter = THREE.LinearFilter;
+  ramp.generateMipmaps = false;
+  ramp.needsUpdate = true;
+  return ramp;
+}
+
 export class Ink {
   /**
    * @param {object} [opts]
@@ -65,7 +86,16 @@ export class Ink {
   constructor(opts = {}) {
     /** Shared by every ink material; advanced once per frame. */
     this.time = { value: 0 };
-    this.baseWobble = opts.wobble ?? 0.012;
+    // No wander at all. Any wobble opens hairline cracks between triangles
+    // (each vertex has its own seed) and the ink hull shows through them as
+    // scribbles — right for a sketchbook, wrong for crisp toy plastic.
+    this.baseWobble = opts.wobble ?? 0;
+    /** Every pen is scaled by this — thin, even lines, like a cel cartoon. */
+    this.penScale = opts.penScale ?? 0.5;
+    /** The cozy look has no ink lines at all: shapes are defined by soft
+     *  shading alone. The hull is still built (callers hold references to
+     *  it) but never added to the scene, so it costs no draw calls. */
+    this.outlines = opts.outlines ?? false;
     /** @type {{material: THREE.Material, uniforms: any}[]} */
     this.registry = [];
     this.reduced = false;
@@ -83,9 +113,9 @@ export class Ink {
   }
 
   /**
-   * A wobbling lambert body. Lambert rather than standard because the world
-   * is stylised — we want flat, poster-like shading, not physically plausible
-   * roughness, and it is markedly cheaper on a phone.
+   * A soft toon body: smooth round shapes, gentle shading from a shallow
+   * ramp, the cozy Animal Crossing look. Smooth normals by default so a
+   * sphere reads as a ball, not a gem.
    *
    * @param {THREE.Color | string | number} col
    * @param {object} [opts]
@@ -93,10 +123,11 @@ export class Ink {
    * @param {boolean} [opts.flat]
    */
   bodyMaterial(col, opts = {}) {
-    const material = new THREE.MeshLambertMaterial({
+    const material = new THREE.MeshToonMaterial({
       color: col instanceof THREE.Color ? col : new THREE.Color(col),
-      flatShading: opts.flat ?? true,
+      gradientMap: toonRamp(),
     });
+    material.flatShading = opts.flat ?? false;
 
     const uniforms = {
       uTime: this.time,
@@ -134,9 +165,9 @@ export class Ink {
   outlineMaterial(opts = {}) {
     const uniforms = {
       uTime: this.time,
-      uWobble: { value: opts.wobble ?? this.baseWobble },
+      uWobble: { value: Math.min(opts.wobble ?? this.baseWobble, this.baseWobble) },
       uEnergy: { value: 1 },
-      uWidth: { value: opts.width ?? 0.035 },
+      uWidth: { value: (opts.width ?? 0.035) * this.penScale },
       uColor: { value: opts.color ?? color('outline') },
     };
 
@@ -158,7 +189,10 @@ export class Ink {
       `,
       fragmentShader: /* glsl */ `
         uniform vec3 uColor;
-        void main() { gl_FragColor = vec4(uColor, 1.0); }
+        void main() {
+          gl_FragColor = vec4(uColor, 1.0);
+          #include <colorspace_fragment>
+        }
       `,
     });
 
@@ -182,7 +216,10 @@ export class Ink {
   draw(geometry, col, opts = {}) {
     addSeeds(geometry);
 
-    const body = new THREE.Mesh(geometry, this.bodyMaterial(col, opts));
+    const body = new THREE.Mesh(geometry, this.bodyMaterial(col, {
+      ...opts,
+      wobble: Math.min(opts.wobble ?? this.baseWobble, this.baseWobble),
+    }));
     const outline = new THREE.Mesh(geometry, this.outlineMaterial(opts));
     outline.renderOrder = -1;
 
@@ -192,7 +229,8 @@ export class Ink {
     }
 
     const group = /** @type {any} */ (new THREE.Group());
-    group.add(outline, body);
+    if (this.outlines) group.add(outline, body);
+    else group.add(body);
     group.body = body;
     group.outline = outline;
     return group;

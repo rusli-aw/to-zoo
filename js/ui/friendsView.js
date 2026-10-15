@@ -15,6 +15,7 @@ import { doneTasks, getState, mood as zooMoodOf, readShareCode, shareCode } from
 import { FRIENDS } from '../data/seed.js';
 import { toast } from './toast.js';
 import { openDialog } from './dialog.js';
+import { avatarMark, friendMark } from './icons.js';
 
 export function renderFriendsView(root, ctx) {
   const state = getState();
@@ -34,7 +35,7 @@ export function renderFriendsView(root, ctx) {
 
   root.innerHTML = `
     <div class="me-card">
-      <span class="me-card__avatar" aria-hidden="true">${me.avatar}</span>
+      <span class="me-card__avatar" aria-hidden="true">${avatarMark(me.name, me.avatar)}</span>
       <div class="me-card__body">
         <h3 class="me-card__name">Your zoo</h3>
         <p class="me-card__stats">
@@ -63,7 +64,7 @@ export function renderFriendsView(root, ctx) {
 function friendCard(friend, me) {
   return `
     <li class="friend-card">
-      <span class="friend-card__avatar" aria-hidden="true">${friend.avatar}</span>
+      <span class="friend-card__avatar" aria-hidden="true">${friendMark(friend.name)}</span>
       <div class="friend-card__body">
         <h3 class="friend-card__name">
           ${escapeHtml(friend.name)}${friend.shared ? ' <span class="tag">shared</span>' : ''}
@@ -112,7 +113,7 @@ function openShare(me, ctx) {
     body: `
       <div class="share">
         <div class="share-card" id="share-card">
-          <span class="share-card__avatar">${me.avatar}</span>
+          <span class="share-card__avatar">${avatarMark(me.name, me.avatar)}</span>
           <b class="share-card__name">${escapeHtml(me.name)}'s zoo</b>
           <dl class="share-card__stats">
             <div><dt>Released</dt><dd>${me.released}</dd></div>

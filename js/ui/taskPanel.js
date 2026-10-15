@@ -15,6 +15,7 @@ import {
 import { deleteTask } from '../store.js';
 import { confirmDialog, openDialog } from './dialog.js';
 import { openAddTask } from './addTask.js';
+import { glyph } from './icons.js';
 
 /**
  * @param {import('../model.js').Task} task
@@ -38,7 +39,7 @@ export function openTaskPanel(task, handlers) {
     body: `
       <div class="task-panel">
         <div class="task-panel__animal">
-          <span class="task-panel__emoji" aria-hidden="true">${spec.emoji}</span>
+          <span class="task-panel__emoji" aria-hidden="true">${glyph(spec.emoji)}</span>
           <div>
             <span class="task-panel__type">${spec.label}</span>
             <span class="task-panel__size">${spec.sizeWord} task</span>
@@ -49,7 +50,7 @@ export function openTaskPanel(task, handlers) {
              is watching what it is doing in the zoo. -->
         <div class="mood" data-stage="${stage.key}">
           <div class="mood__head">
-            <span class="mood__face" aria-hidden="true">${stage.emoji}</span>
+            <span class="mood__face" aria-hidden="true">${glyph(stage.emoji)}</span>
             <span class="mood__label">${stage.label}</span>
             <span class="mood__pct">${moodValue}%</span>
           </div>

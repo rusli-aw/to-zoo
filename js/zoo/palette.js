@@ -17,6 +17,9 @@ const TOKENS = [
   'sky-high', 'sky-low', 'water', 'water-deep', 'sea-shallow', 'sea', 'sea-deep', 'foam',
   'elephant', 'lion', 'rabbit', 'rabbit-ear', 'outline', 'cloth', 'ivory',
   'accent', 'accent-deep', 'thrive', 'caution', 'overdue',
+  'stone', 'stone-deep', 'picket', 'roof', 'blush',
+  'flower-pink', 'flower-yellow', 'flower-lilac', 'flower-peach',
+  'confetti-blue', 'confetti-yellow', 'confetti-green', 'confetti-orange', 'confetti-pink', 'confetti-violet',
 ];
 
 /** @type {Record<string, THREE.Color>} */
