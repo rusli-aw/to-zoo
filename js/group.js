@@ -209,6 +209,12 @@ export function createGroupSync(hooks = {}) {
   const backend = isCloud() ? cloudBackend() : localBackend();
   let active = null;   // zoo id we are listening to
   let people = [];
+  /** Task ids written locally but not yet confirmed by the backend. */
+  const pending = new Set();
+  const save = (id, task) => {
+    pending.add(task.id);
+    return backend.upsert(id, task).finally(() => pending.delete(task.id));
+  };
 
   const member = () => ({ name: getState().user.name, avatar: getState().user.avatar });
   const fail = (err) => {
@@ -221,7 +227,7 @@ export function createGroupSync(hooks = {}) {
     backend.stop();
     active = id;
     Promise.resolve(backend.listen(id, member(), {
-      onTasks: (tasks) => { if (active === id) applyRemoteTasks(tasks); },
+      onTasks: (tasks) => { if (active === id) applyRemoteTasks(tasks, pending); },
       onPeople: (list) => { people = list; hooks.onPeople?.(list); },
     })).catch(fail);
   }
@@ -234,11 +240,11 @@ export function createGroupSync(hooks = {}) {
     const t = change.type;
     if (t === 'task:add' || t === 'task:update' || t === 'task:complete' || t === 'task:uncomplete') {
       const task = change.task?.id ? taskById(change.task.id) : taskById(change.id);
-      if (task) backend.upsert(id, task).catch(fail);
+      if (task) save(id, task).catch(fail);
     } else if (t === 'task:delete') {
       backend.remove(id, change.id).catch(fail);
     } else if (t === 'task:reorder') {
-      for (const task of state.tasks) backend.upsert(id, task).catch(fail);
+      for (const task of state.tasks) save(id, task).catch(fail);
     }
   });
 

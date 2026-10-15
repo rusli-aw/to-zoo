@@ -606,13 +606,17 @@ export function leaveGroup() {
  * The group's tasks changed somewhere else. Newest edit wins per task; a
  * task missing from the remote list was deleted by someone.
  */
-export function applyRemoteTasks(remote) {
+export function applyRemoteTasks(remote, pending = new Set()) {
   commit({ type: 'remote' }, (s) => {
     const mine = new Map(s.tasks.map((t) => [t.id, t]));
     const tasks = remote.map((r) => {
       const local = mine.get(r.id);
       return local && (local.updatedAt ?? 0) > (r.updatedAt ?? 0) ? local : makeTask(r);
     });
+    // A task still on its way to the server is not "deleted" just because
+    // the server has not heard of it yet.
+    const seen = new Set(remote.map((r) => r.id));
+    for (const t of s.tasks) if (pending.has(t.id) && !seen.has(t.id)) tasks.push(t);
     return { ...s, tasks };
   });
 }
