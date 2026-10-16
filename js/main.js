@@ -612,7 +612,6 @@ async function boot() {
   }
 
   $('add-task').addEventListener('click', addTask);
-  $('empty-add').addEventListener('click', addTask);
   $('tokens').addEventListener('click', () => views.show('customize'));
   $('avatar-btn').addEventListener('click', () => views.show('profile'));
   $('brand').addEventListener('click', () => openPostcard(zoo));
@@ -690,8 +689,8 @@ async function boot() {
       console.error('[to-zoo] could not size the stage', err);
     }
 
-    // First visit: straight into an empty zoo; the "add your first task"
-    // card does the explaining.
+    // First visit: straight into an empty zoo. The Add task button is the
+    // only thing to do, so it explains itself.
     if (!getState().onboarded) finishOnboarding();
     joinFromUrl();
     grantTestCoins();

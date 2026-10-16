@@ -48,7 +48,6 @@ export function createHud(handlers = {}) {
     neglectTitle: $('neglect-title'),
     neglectWait: $('neglect-wait'),
     navBadge: $('nav-badge'),
-    empty: $('empty'),
   };
 
   els.ring.style.strokeDasharray = String(RING);
@@ -218,8 +217,6 @@ export function createHud(handlers = {}) {
       els.navBadge.textContent = String(stats.overdue);
       els.navBadge.title = `${stats.overdue} overdue`;
 
-      // ── empty state ──
-      els.empty.hidden = open.length > 0 || !state.onboarded;
     },
 
     /** Called when flying coins land. */

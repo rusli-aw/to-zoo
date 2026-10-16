@@ -437,26 +437,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: color-mix(in srgb, var(--focus) 12%, transparent);
 }
 
-/* ══════════════════════════════════════════ empty state ══ */
-
-.empty {
-  position: absolute;
-  z-index: 6;
-  left: 50%;
-  bottom: calc(var(--nav-h) + var(--sp-8));
-  transform: translateX(-50%);
-  width: min(92vw, 460px);
-  text-align: center;
-  padding: var(--sp-6);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  backdrop-filter: blur(14px);
-  box-shadow: var(--shadow-lg);
-  animation: rise var(--dur-slow) var(--ease-out) both;
-}
-.empty__title { font-size: var(--step-2); margin-bottom: var(--sp-2); }
-.empty__body { margin: 0 0 var(--sp-5); color: var(--ink-muted); }
-
 @keyframes rise {
   from { opacity: 0; transform: translate(-50%, calc(16px * var(--motion))); }
   to { opacity: 1; transform: translate(-50%, 0); }
@@ -553,7 +533,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .btn--add span { font-size: 32px; }
   .btn--add .btn__kbd { display: none; }
 
-  .empty { bottom: calc(var(--nav-h) + var(--sp-5)); padding: var(--sp-5); }
 
   /* One glass strip across the top holds brand, status and the counters,
      instead of four separate pills fighting the vines for the corners. */
@@ -739,10 +718,6 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
 .segmented { padding: 3px; }
 .btn--add { border-radius: var(--radius-pill); }
 
-/* The empty-zoo card belongs to the zoo view only: never on top of a panel
-   or a popup. */
-.app[data-sheet="open"] .empty,
-body[data-modal="open"] .empty { display: none; }
 
 /* ── solid white panels (the liquid glass is retired) ── */
 :is(.sheet, .health, .nav, .group-chip, .sound-btn, .today, .piggy, .avatar-btn,
