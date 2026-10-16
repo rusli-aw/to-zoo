@@ -294,9 +294,18 @@ export function createPopulation(zoo, space) {
       }
     },
 
-    /** One hat for the whole zoo — cosmetics are a set, not per-animal. */
+    /** Something new was placed or removed: drop old routes and re-plan. */
+    replan() {
+      for (const entry of entries.values()) {
+        entry.path = [];
+        entry.dwell = Math.min(entry.dwell, 0.3 + Math.random());
+      }
+    },
+
+    /** Accessories for the whole zoo: everyone wears the same set. */
     setCosmetic(build) {
-      if (build === cosmetic) return;
+      const key = [].concat(build ?? []).join(',');
+      if (key === [].concat(cosmetic ?? []).join(',')) return;
       cosmetic = build;
       for (const entry of entries.values()) entry.animal.wear(build);
     },

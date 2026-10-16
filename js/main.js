@@ -216,6 +216,7 @@ async function boot() {
 
   /* ---------------------------------------------------------- syncing -- */
 
+  let lastPlacedKey = null;
   function syncWorld() {
     const state = getState();
 
@@ -240,10 +241,21 @@ async function boot() {
     grass.setVisible(!['summer', 'winter'].includes(seasons.season));
 
     const items = shopItems(state);
+    const placedKey = state.placements.map((p) => p.itemId).join(',');
     decorations.sync(items);
-    // Only one head cosmetic can be worn at a time; the last one placed wins.
-    const worn = items.find((i) => i.owned && i.placedCount > 0 && i.slot === 'animal');
-    population.setCosmetic(worn?.build ?? null);
+    if (placedKey !== lastPlacedKey) {
+      lastPlacedKey = placedKey;
+      population.replan();
+    }
+    // Accessories: one thing on the head (the most recent) plus glasses.
+    const wearing = items.filter((i) => i.owned && i.placedCount > 0 && i.slot === 'animal');
+    const latest = (ids) => state.placements.filter((p) => ids.includes(p.itemId)).at(-1)?.itemId;
+    const head = latest(wearing.filter((i) => i.build !== 'sunglasses').map((i) => i.id));
+    const builds = [
+      wearing.find((i) => i.id === head)?.build,
+      wearing.find((i) => i.build === 'sunglasses')?.build,
+    ].filter(Boolean);
+    population.setCosmetic(builds);
 
     population.sync(state.tasks);
     picking.sync();
@@ -524,6 +536,17 @@ async function boot() {
     }
   });
 
+  /** Testing: open the app with ?coins to get a mountain of tokens. */
+  function grantTestCoins() {
+    const params = new URLSearchParams(location.search);
+    if (!params.has('coins')) return;
+    const amount = Math.min(10_000_000, Number(params.get('coins')) || 99_999);
+    params.delete('coins');
+    history.replaceState(null, '', `${location.pathname}${params.size ? `?${params}` : ''}${location.hash}`);
+    setUser({ tokens: getState().user.tokens + amount });
+    toast({ title: `+${amount.toLocaleString()} test tokens`, note: 'Go wild in Customize.' });
+  }
+
   /** Opened from an invite link: offer to join. */
   async function joinFromUrl() {
     const params = new URLSearchParams(location.search);
@@ -663,6 +686,7 @@ async function boot() {
     // card does the explaining.
     if (!getState().onboarded) finishOnboarding();
     joinFromUrl();
+    grantTestCoins();
 
     // Settle the bill after the zoo is on screen, so the coins have something
     // to fly to and from.

@@ -237,13 +237,17 @@ export function createAnimal(ink, type, seedKey = '') {
     pickTargets: [bodyDraw.body, headDraw.body, accentDraw.body],
 
     /**
-     * Put on (or take off) a bought cosmetic. Parented to the head group so
-     * it inherits every nod and turn for free.
-     * @param {string | null} build
+     * Put on bought accessories. Several can be worn at once (a hat and
+     * sunglasses); each is fitted to this species' head from `parts.fit`, so
+     * a hat sits on the crown and glasses sit on the eyes whatever the
+     * animal. Parented to the head group so they nod and turn with it.
+     * @param {string[] | string | null} builds
      */
-    wear(build) {
-      if (build === cosmeticBuild) return;
-      cosmeticBuild = build;
+    wear(builds) {
+      const list = (Array.isArray(builds) ? builds : [builds]).filter(Boolean);
+      const key = list.join(',');
+      if (key === cosmeticBuild) return;
+      cosmeticBuild = key;
 
       if (cosmetic) {
         cosmetic.removeFromParent();
@@ -254,23 +258,31 @@ export function createAnimal(ink, type, seedKey = '') {
         });
         cosmetic = null;
       }
-      if (!build) return;
+      if (!list.length) return;
 
-      const item = cosmeticGeometry(build);
-      if (!item?.parts?.length) return;
-
-      // One group holding every coloured piece, so a straw hat can have a red
-      // band and an udeng its gold thread.
       cosmetic = new THREE.Group();
-      for (const part of item.parts) {
-        cosmetic.add(ink.draw(part.geometry, color(part.token).clone(), {
-          width: penWidth,
-          wobble: 0.014,
-        }));
+      const fit = parts.fit ?? { top: 0.5, eyeY: 0.08, eyeZ: 0.4 };
+      const s = (parts.headRadius ?? 0.47) / 0.47;
+      for (const build of list) {
+        const item = cosmeticGeometry(build);
+        if (!item?.parts?.length) continue;
+        const piece = new THREE.Group();
+        for (const part of item.parts) {
+          piece.add(ink.draw(part.geometry.clone(), color(part.token).clone(), { width: penWidth }));
+        }
+        // The pieces are drawn for a head of radius 0.47 whose crown is at
+        // y 0.5 and whose eyes are at (0.08, 0.4). Scale, then move onto
+        // this head's own crown or eyes.
+        if (item.kind === 'eyes') {
+          piece.scale.setScalar(s);
+          piece.position.set(0, fit.eyeY - 0.08 * s, fit.eyeZ - 0.42 * s);
+        } else {
+          const hs = s * (fit.hatScale ?? 1);
+          piece.scale.setScalar(hs);
+          piece.position.set(0, fit.top - 0.5 * hs, 0);
+        }
+        cosmetic.add(piece);
       }
-      // The geometry is drawn for an elephant's head; everyone else is
-      // wearing the same hat in their own size.
-      cosmetic.scale.setScalar((parts.headRadius ?? 0.47) / 0.47);
       headGroup.add(cosmetic);
     },
 

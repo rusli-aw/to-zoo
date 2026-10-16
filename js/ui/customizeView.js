@@ -144,9 +144,11 @@ export function renderCustomizeView(root, ctx) {
       const id = button.dataset.buy;
       const item = shopItems().find((i) => i.id === id);
       if (!buyItem(id)) return;
+      // Straight into the zoo (or onto every animal, for accessories).
+      placeItem(id, 0, 0, 0);
       ctx.syncWorld();
       toast({
-        title: `${item.name} added to your zoo`,
+        title: item.slot === 'animal' ? `Everyone's wearing the ${item.name.toLowerCase()}` : `${item.name} added to your zoo`,
         emoji: '✨',
         duration: 3000,
       });

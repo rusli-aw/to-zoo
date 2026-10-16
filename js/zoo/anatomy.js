@@ -97,6 +97,8 @@ export function buildElephant() {
     cheeks: cheeks(0.37, -0.1, 0.43, 0.09),
     headAt: new THREE.Vector3(0, 1.55, 0.72),
     headRadius: 0.6,
+    /** Where accessories sit, in head space: crown of the head, and the eyes. */
+    fit: { top: 0.58, eyeY: 0.08, eyeZ: 0.54 },
     bodyColor: 'elephant',
     // --ivory, not --surface. UI-role tokens flip with the theme, so tusks
     // bound to --surface were the brightest thing on the animal after dark
@@ -152,6 +154,8 @@ export function buildLion() {
     cheeks: cheeks(0.24, -0.08, 0.3, 0.065),
     headAt: new THREE.Vector3(0, 1.08, 0.5),
     headRadius: 0.38,
+    // The mane stands proud of the skull, so hats sit on the mane.
+    fit: { top: 0.5, eyeY: 0.07, eyeZ: 0.37, hatScale: 1.25 },
     bodyColor: 'lion',
     accentColor: 'earth',
     height: 1.55,
@@ -206,6 +210,8 @@ export function buildRabbit() {
     cheeks: cheeks(0.15, -0.05, 0.19, 0.045),
     headAt: new THREE.Vector3(0, 0.62, 0.18),
     headRadius: 0.24,
+    // Ears stand up through whatever it wears, which is the cute part.
+    fit: { top: 0.23, eyeY: 0.04, eyeZ: 0.235 },
     bodyColor: 'rabbit',
     accentColor: 'rabbit-ear',
     /** Hops instead of walking — see the gait switch in animals.js. */

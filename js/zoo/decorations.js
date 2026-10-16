@@ -384,13 +384,23 @@ export function buildDecorations(zoo, space = null) {
 
     group.add(root);
 
+    // How much ground it really covers, measured from the model, so animals
+    // walk round the whole thing rather than a guessed circle. Flat things
+    // (paths, meadows, streams, bridges) stay walkable.
+    let footprint = FOOTPRINT[item.build] ?? 0.7;
+    if (footprint > 0) {
+      const box = new THREE.Box3().setFromObject(root);
+      const half = Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2;
+      if (Number.isFinite(half)) footprint = Math.max(footprint, half * 0.9);
+    }
+
     // Newly bought things arrive rather than appear.
     root.scale.setScalar(reduced() ? 1 : 0.01);
     // Anything with a trunk or a bank is something to walk around; ambient
     // flocks are not, so they are left out of the register entirely.
     if (space && item.slot !== 'ambient' && item.slot !== 'animal') {
       space.register(`deco_${item.id}`, {
-        x: spot.x, z: spot.z, r: FOOTPRINT[item.build] ?? 0.7, mobile: false,
+        x: spot.x, z: spot.z, r: footprint, mobile: false,
       });
     }
     placed.set(item.id, { root, sway: spec.sway ?? 0, flock, grow: reduced() ? 1 : 0 });
@@ -547,6 +557,7 @@ export function cosmeticGeometry(build) {
 
     case 'sunglasses':
       return {
+        kind: 'eyes',
         parts: [
           {
             token: 'outline',
