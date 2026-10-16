@@ -554,15 +554,27 @@ async function boot() {
     }
   });
 
-  /** Testing: open the app with ?coins to get a mountain of tokens. */
+  /**
+   * Testing: `?coins=250` sets the balance to exactly 250, and `?coins` on its
+   * own tops it up to 9,999. Setting rather than adding, so `?coins=0` empties
+   * the piggy bank before recording a demo. It used to add, which made zero
+   * unreachable: `Number('0') || 99_999` read an explicit nought as "unset"
+   * and handed over 99,999.
+   */
   function grantTestCoins() {
     const params = new URLSearchParams(location.search);
     if (!params.has('coins')) return;
-    const amount = Math.min(10_000_000, Number(params.get('coins')) || 99_999);
+    const asked = params.get('coins');
+    const amount = asked === '' || Number.isNaN(Number(asked))
+      ? 9_999
+      : Math.max(0, Math.min(10_000_000, Math.round(Number(asked))));
     params.delete('coins');
     history.replaceState(null, '', `${location.pathname}${params.size ? `?${params}` : ''}${location.hash}`);
-    setUser({ tokens: getState().user.tokens + amount });
-    toast({ title: `+${amount.toLocaleString()} test tokens`, note: 'Go wild in Customize.' });
+    setUser({ tokens: amount });
+    toast({
+      title: amount === 0 ? 'Piggy bank emptied' : `${amount.toLocaleString()} test tokens`,
+      note: amount === 0 ? 'Back to nothing, ready to record.' : 'Go wild in Customize.',
+    });
   }
 
   /**
