@@ -1381,3 +1381,24 @@ textarea.field__input { resize: vertical; min-height: 72px; }
   .postcard__message { border-right: 0; border-bottom: 1.5px solid rgba(110, 63, 34, .35); padding: 0 0 var(--sp-4); }
   .modal--postcard .modal__panel { left: 50%; top: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); border-radius: 4px; }
 }
+
+/* ── owner tag on a pet, in group zoos ── */
+.mood-bar__owner {
+  padding: 0 5px 0 2px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+  max-width: 7em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mood-bar__owner[hidden] { display: none; }
+
+/* ── name / sign-in dialog ── */
+.name-form { display: grid; gap: var(--sp-3); }
+.google-btn { gap: var(--sp-3); background: #fff; color: #3c4043; border: 1px solid #dadce0; font-weight: 600; }
+.name-form__or { display: flex; align-items: center; gap: var(--sp-3); margin: 0; color: var(--ink-faint); font-size: var(--step--2); }
+.name-form__or::before, .name-form__or::after { content: ""; flex: 1; border-top: 1px solid var(--line-strong); }
+.mood-bar[data-name-only] :is(.mood-bar__face, .mood-bar__track) { display: none; }
+.mood-bar[data-name-only] .mood-bar__owner { padding: 0 4px; }

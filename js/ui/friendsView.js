@@ -17,6 +17,7 @@ import { toast } from './toast.js';
 import { openDialog } from './dialog.js';
 import { avatarMark, friendMark } from './icons.js';
 import { inviteLink, parseInvite } from '../group.js';
+import { ensureName } from './identity.js';
 
 export function renderFriendsView(root, ctx) {
   const state = getState();
@@ -113,6 +114,7 @@ function wireGroup(root, ctx) {
   const oops = (err) => toast({ title: 'Could not reach the group zoo', note: String(err?.message ?? err) });
 
   root.querySelector('[data-group-create]')?.addEventListener('click', async () => {
+    if (!(await ensureName())) return;
     const name = root.querySelector('[data-group-name]').value.trim() || 'Our zoo';
     try {
       const id = await group.create(name);
@@ -125,6 +127,7 @@ function wireGroup(root, ctx) {
   root.querySelector('[data-group-join]')?.addEventListener('click', async () => {
     const id = parseInvite(root.querySelector('[data-group-link]').value);
     if (!id) { toast({ title: 'That doesn\u2019t look like an invite link' }); return; }
+    if (!(await ensureName())) return;
     try {
       const zoo = await group.join(id);
       if (!zoo) { toast({ title: 'No group zoo at that link' }); return; }

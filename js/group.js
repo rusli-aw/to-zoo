@@ -283,6 +283,14 @@ export function createGroupSync(hooks = {}) {
       return zoo;
     },
 
+    /** Re-join presence under the current name (after a rename). */
+    reannounce() {
+      const id = active;
+      if (!id) return;
+      active = null;
+      listen(id);
+    },
+
     leave() {
       backend.stop();
       active = null;

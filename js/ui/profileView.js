@@ -196,6 +196,7 @@ export function renderProfileView(root, ctx) {
   const nameInput = root.querySelector('[data-name]');
   nameInput.addEventListener('change', () => {
     setUser({ name: nameInput.value.trim() || 'You' });
+    window.dispatchEvent(new CustomEvent('to-zoo:renamed'));
   });
 
   root.querySelector('[data-avatar]').addEventListener('click', () => {

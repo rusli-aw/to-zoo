@@ -256,7 +256,7 @@ export function placedItems(s = state) {
 
 /** @returns {Task} the created task, so the caller can focus its animal */
 export function addTask(input) {
-  const by = state.group ? { name: state.user.name, avatar: state.user.avatar } : null;
+  const by = state.group ? { id: state.user.id, name: state.user.name, avatar: state.user.avatar } : null;
   const task = makeTask({ ...input, order: Date.now(), by });
   commit({ type: 'task:add', task }, (s) => ({ ...s, tasks: [...s.tasks, task] }));
   return task;

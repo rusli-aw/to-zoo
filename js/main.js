@@ -31,7 +31,7 @@ import { refresh as refreshPalette } from './zoo/palette.js';
 import {
   getState, subscribe, onError, mood as zooMoodOf, setSetting,
   taskById, completeTask, uncompleteTask, setUser, finishOnboarding, loadDemo,
-  shopItems, settleUpkeep, placedItems,
+  shopItems, settleUpkeep, placedItems, updateTask,
 } from './store.js';
 import { ANIMALS, mood as moodOfTask } from './model.js';
 
@@ -42,6 +42,7 @@ import { openTaskPanel } from './ui/taskPanel.js';
 import { flyTokens, toast } from './ui/toast.js';
 import { confirmDialog } from './ui/dialog.js';
 import { openPostcard } from './ui/postcard.js';
+import { ensureName, finishGoogleSignIn } from './ui/identity.js';
 import { isDialogOpen } from './ui/dialog.js';
 import { mountViews } from './ui/views.js';
 
@@ -503,6 +504,26 @@ async function boot() {
   renderGroupChip();
   subscribe((_, change) => { if (change.type.startsWith('group:')) renderGroupChip(); });
 
+  // A name was just given: relabel this person's pets in the group, and tell
+  // everyone else who is here.
+  function relabelMine() {
+    const s = getState();
+    if (!s.group) return;
+    for (const t of s.tasks) {
+      if (t.by && t.by.id === s.user.id && t.by.name !== s.user.name) {
+        updateTask(t.id, { by: { ...t.by, name: s.user.name, avatar: s.user.avatar } });
+      }
+    }
+    group.reannounce();
+  }
+  window.addEventListener('to-zoo:renamed', relabelMine);
+  finishGoogleSignIn().then((signedIn) => {
+    if (signedIn) {
+      relabelMine();
+      toast({ title: `Hi ${getState().user.name}` });
+    }
+  });
+
   /** Opened from an invite link: offer to join. */
   async function joinFromUrl() {
     const params = new URLSearchParams(location.search);
@@ -520,6 +541,7 @@ async function boot() {
         confirmLabel: 'Join the zoo',
       });
       if (!yes) return;
+      if (!(await ensureName())) return;
       await group.join(id);
       syncWorld();
       toast({ title: `Welcome to ${zoo.name}` });
@@ -536,7 +558,9 @@ async function boot() {
     syncWorld,
   });
 
-  function addTask() {
+  async function addTask() {
+    // In a group zoo every pet carries its owner's name, so get one first.
+    if (getState().group && !(await ensureName())) return;
     picking.setSuspended(true);
     openAddTask({
       onCreated(task) {

@@ -49,6 +49,7 @@ function matches(task) {
     case 'today': return days === 0;
     case 'soon': return days !== null && days >= 0 && days <= 7;
     case 'someday': return task.dueDate === null;
+    case 'mine': return task.by?.id === getState().user.id;
     default: return true;
   }
 }
@@ -107,7 +108,7 @@ export function renderTasksView(root, ctx) {
     </div>
 
     <div class="chips chips--filter" role="group" aria-label="Filter tasks">
-      ${FILTERS.map((f) => `
+      ${(getState().group ? [FILTERS[0], { id: 'mine', label: 'Mine' }, ...FILTERS.slice(1)] : FILTERS).map((f) => `
         <button class="chip${f.id === filter ? ' is-on' : ''}" type="button"
                 data-filter="${f.id}" aria-pressed="${f.id === filter}">${f.label}</button>`).join('')}
     </div>

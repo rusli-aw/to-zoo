@@ -15,6 +15,7 @@
 import * as THREE from 'three';
 import { ANIMALS, mood as moodOf, moodStage } from '../model.js';
 import { glyph } from './icons.js';
+import { getState } from '../store.js';
 
 export function createMoodBars(zoo, population) {
   const host = document.createElement('div');
@@ -35,7 +36,8 @@ export function createMoodBars(zoo, population) {
 
     const el = document.createElement('div');
     el.className = 'mood-bar';
-    el.innerHTML = '<span class="mood-bar__face"></span>'
+    el.innerHTML = '<span class="mood-bar__owner" hidden></span>'
+      + '<span class="mood-bar__face"></span>'
       + '<span class="mood-bar__track"><i></i></span>';
     host.appendChild(el);
 
@@ -43,6 +45,7 @@ export function createMoodBars(zoo, population) {
       el,
       fill: el.querySelector('i'),
       face: el.querySelector('.mood-bar__face'),
+      owner: el.querySelector('.mood-bar__owner'),
       shown: -1,
     };
     bars.set(taskId, bar);
@@ -66,12 +69,19 @@ export function createMoodBars(zoo, population) {
       const value = moodOf(entry.task);
       const id = entry.task.id;
 
+      // In a group zoo, whose pet is this? That label stays even when the
+      // pet is perfectly happy.
+      const owner = getState().group ? (entry.task.by?.name ?? '') : '';
+
       // Full mood is a happy animal, and a happy animal does not need a meter.
-      if (value >= 100) { drop(id); continue; }
+      if (value >= 100 && !owner) { drop(id); continue; }
       alive.add(id);
 
       const bar = ensure(id);
       const stage = moodStage(value);
+      if (bar.owner.textContent !== owner) bar.owner.textContent = owner;
+      bar.owner.hidden = !owner;
+      bar.el.toggleAttribute('data-name-only', value >= 100);
 
       if (bar.shown !== value) {
         bar.shown = value;
