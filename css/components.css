@@ -1263,7 +1263,17 @@ textarea.field__input { resize: vertical; min-height: 72px; }
    A flip postcard. The front is a scalloped picture card with your zoo on
    it; the back is plain card stock with a note, stamp and address lines. */
 
-.brand { pointer-events: auto; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; font: inherit; }
+/* The wordmark wears the same frosted pill as the rest of the HUD, so it
+   reads as part of the interface rather than as paint on the scene. */
+.brand {
+  pointer-events: auto;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink);
+  font: inherit;
+  padding: var(--sp-1) var(--sp-4) var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-pill);
+}
 .brand__mark { transition: transform var(--dur) var(--ease-bounce); }
 .brand:hover .brand__mark { transform: rotate(-8deg); }
 

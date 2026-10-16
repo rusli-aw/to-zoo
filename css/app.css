@@ -100,6 +100,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  /* The frosted pill itself is in components.css, which loads later and
+     resets this button. */
 }
 .brand__mark {
   width: 40px; height: 32px;
@@ -524,7 +526,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
    the CSS frost above still applies. */
 
 :root.glass-on :is(.sheet, .health, .nav, .group-chip, .sound-btn, .today, .piggy,
-                   .avatar-btn, .hover-card, .release-skip .btn, .mood-bar) {
+                   .avatar-btn, .hover-card, .release-skip .btn, .mood-bar, .brand) {
   background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -675,7 +677,7 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
 
 
 /* ── solid white panels (the liquid glass is retired) ── */
-:is(.sheet, .health, .nav, .group-chip, .sound-btn, .today, .piggy, .avatar-btn,
+:is(.sheet, .health, .nav, .group-chip, .sound-btn, .today, .piggy, .avatar-btn, .brand,
     .hover-card, .mood-bar, .modal--centre .modal__panel, .modal--sheet .modal__panel, .toast) {
   background: #ffffff;
   backdrop-filter: none;
