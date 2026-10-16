@@ -97,7 +97,18 @@ function failGracefully(message, detail) {
         <p>${message}</p>
         <p class="fallback-card__hint">Your tasks are safe. They are stored on this
         device, not in the 3D scene.</p>
+        <button class="btn btn--primary" type="button" id="fallback-reload">Reload the zoo</button>
+        <p class="fallback-card__hint">If it keeps happening, reload bypassing the
+        cache: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>, or <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> on a Mac.</p>
       </div>`;
+    // The likeliest cause after a deploy is a half-updated cache: a fresh
+    // index.html beside a module the browser kept from an earlier visit. A
+    // plain reload clears it once the short cache lifetime is up, and the
+    // hint above covers the case where it has not expired yet — JavaScript
+    // cannot drop the HTTP cache on its own.
+    root.querySelector('#fallback-reload')?.addEventListener('click', () => {
+      location.reload();
+    });
   }
 }
 

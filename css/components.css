@@ -276,6 +276,8 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 }
 .fallback-card h2 { margin-bottom: var(--sp-3); }
 .fallback-card__hint { color: var(--ink-muted); font-size: var(--step--1); }
+.fallback-card .btn { margin-top: var(--sp-4); }
+.fallback-card .btn + .fallback-card__hint { margin-top: var(--sp-3); font-size: var(--step--2); }
 
 /* ── task panel ── */
 
