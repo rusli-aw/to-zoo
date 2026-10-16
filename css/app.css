@@ -738,3 +738,8 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
   .app .nav__item { height: 50px; flex: 1; max-width: 76px; justify-content: center; padding: 0 4px; border-radius: 14px; }
   .app .nav__badge { position: absolute; top: 2px; right: 10px; min-width: 16px; height: 16px; font-size: 10px; }
 }
+@media (max-width: 640px) {
+  /* Six tabs: let each share the width evenly and keep labels whole. */
+  .app .nav__item { max-width: none; min-width: 0; padding: 0 2px; }
+  .app .nav__label { font-size: 10px; white-space: nowrap; overflow: visible; text-overflow: clip; letter-spacing: -0.01em; }
+}
