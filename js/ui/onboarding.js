@@ -31,53 +31,49 @@ const STEPS = [
   {
     key: 'welcome',
     title: 'Welcome to To-Zoo.',
-    body: 'An animal rescue for your to-do list. Every task you take on becomes '
-        + 'an animal in your care, and finishing it sends one home.',
+    body: 'Your to-do list as an animal rescue. Every task becomes an animal in your care.',
   },
   {
     key: 'elephant',
-    title: 'The elephant is your big one.',
-    body: 'The task you keep putting off. The elephant in the room.',
+    title: 'The elephant.',
+    body: 'The massive tasks, or ones with close deadlines.',
   },
   {
     key: 'lion',
-    title: 'The lion is middling work.',
-    body: 'Important, but manageable. An afternoon, not a fortnight.',
+    title: 'The lion.',
+    body: 'Medium tasks that are important.',
   },
   {
     key: 'rabbit',
-    title: 'The rabbit is a quick win.',
-    body: 'Five minutes and it is gone. Type a task and To-Zoo picks the animal for you.',
+    title: 'The rabbit.',
+    body: 'Quick wins in the day. Type a task and To-Zoo picks for you.',
   },
   {
     key: 'release',
     title: 'Finish a task. Send one home.',
-    body: 'The gate opens, the animal walks back into the wild, and you are paid '
-        + 'in tokens for looking after it.',
+    body: 'The gate opens, it walks home, and you earn tokens.',
   },
   {
     key: 'shop',
-    title: 'Spend your tokens here.',
-    body: 'Decorations for the zoo, accessories for your animals, and whole seasons.',
+    title: 'Spend your tokens.',
+    body: 'Decorations, accessories for your animals, and whole seasons.',
   },
   {
     key: 'neglect',
     title: 'Leave one too long and it gives up.',
-    body: 'Moods drain on their own, and eventually it lies down and waits. It never '
-        + 'dies and it never tells you off. The moment you do the task, it is fine again.',
+    body: 'It lies down and waits. Do the task and it is fine again.',
   },
   {
     key: 'group',
-    title: 'Share a zoo with other people.',
-    body: 'One for your flat, one for a group project. Everyone adds tasks, and anyone '
-        + 'can send an animal home.',
+    title: 'Share a zoo.',
+    body: 'One for your flat, one for a group project. Everyone adds tasks.',
   },
   {
     key: 'why',
     title: 'Why we built it this way.',
-    body: 'For students, and for people with ADHD or attention difficulties who bounce '
-        + 'off ordinary to-do lists. No streaks to break. Nothing punishes a long list. '
-        + 'Only neglect shows.',
+    body: 'For students, and for people with ADHD or attention difficulties who '
+        + 'bounce off to-do lists. No streaks to break, and a long list costs you '
+        + 'nothing. Only neglect shows.',
   },
 ];
 

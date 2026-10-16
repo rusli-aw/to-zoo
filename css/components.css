@@ -1666,7 +1666,7 @@ textarea.field__input { border-radius: var(--radius-sm) !important; resize: vert
 
 .tour__panel {
   pointer-events: auto;
-  width: min(94vw, 520px);
+  width: min(94vw, 560px);
   padding: var(--sp-5);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--surface) 94%, transparent);
@@ -1687,6 +1687,8 @@ textarea.field__input { border-radius: var(--radius-sm) !important; resize: vert
   font-size: var(--step-2);
 }
 .tour__title:focus-visible { outline: none; }
+/* No orphans: a heading or caption must never leave one word on its own line. */
+.tour__title, .tour__body { text-wrap: pretty; }
 .tour__body { margin: 0; color: var(--ink-muted); }
 .tour__body b { color: var(--ink); font-weight: 600; }
 
@@ -1704,7 +1706,10 @@ textarea.field__input { border-radius: var(--radius-sm) !important; resize: vert
   transition: width var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-soft);
 }
 .tour__dot.is-on { width: 18px; border-radius: var(--radius-pill); background: var(--accent); }
+/* Button labels stay on one line; "Start with a demo zoo" was breaking and
+   leaving "zoo" stranded underneath. */
 .tour__actions { display: flex; gap: var(--sp-2); }
+.tour__actions .btn { white-space: nowrap; }
 
 /* While the tour runs, the HUD would only compete with it. */
 body[data-tour="open"] :is(.hud--bl, .hud--br, .nav) {
@@ -1716,5 +1721,5 @@ body[data-tour="open"] :is(.hud--bl, .hud--br, .nav) {
 @media (max-width: 560px) {
   .tour__foot { flex-wrap: wrap; }
   .tour__actions { width: 100%; }
-  .tour__actions .btn { flex: 1; }
+  .tour__actions .btn { flex: 1; min-width: 0; }
 }
