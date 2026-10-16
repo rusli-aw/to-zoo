@@ -111,3 +111,43 @@ export function renderPortraits(zoo) {
 
 /** The portrait for a species, or '' before they have been rendered. */
 export const portraitOf = (type) => urls[type] ?? '';
+
+/**
+ * A snapshot of the zoo as it is right now, from a wide, slightly raised
+ * view, for the postcard front. Rendered offscreen at its own size, so it
+ * is crisp whatever the window, and returned as a data URL.
+ *
+ * @param {import('./scene.js').ZooScene} zoo
+ */
+export function snapshotZoo(zoo, width = 900, height = 600) {
+  const { renderer, scene } = zoo;
+  const rt = new THREE.WebGLRenderTarget(width, height, { samples: 4 });
+  rt.texture.colorSpace = THREE.SRGBColorSpace;
+  const camera = new THREE.PerspectiveCamera(40, width / height, 0.5, 260);
+  camera.position.set(4.5, 5.2, 14);
+  camera.lookAt(0, 1.2, -2.5);
+  // The vines hang on the main camera; they should not be on the postcard.
+  const hidden = [];
+  for (const child of zoo.camera.children) if (child.visible) { child.visible = false; hidden.push(child); }
+
+  const prev = renderer.getRenderTarget();
+  renderer.setRenderTarget(rt);
+  renderer.render(scene, camera);
+  const pixels = new Uint8Array(width * height * 4);
+  renderer.readRenderTargetPixels(rt, 0, 0, width, height, pixels);
+  renderer.setRenderTarget(prev);
+  rt.dispose();
+  for (const child of hidden) child.visible = true;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+  const img = ctx.createImageData(width, height);
+  for (let y = 0; y < height; y += 1) {
+    img.data.set(pixels.subarray((height - 1 - y) * width * 4, (height - y) * width * 4), y * width * 4);
+  }
+  ctx.putImageData(img, 0, 0);
+  return canvas.toDataURL('image/jpeg', 0.88);
+}

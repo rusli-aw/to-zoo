@@ -95,7 +95,7 @@ function failGracefully(message, detail) {
       <div class="fallback-card" role="alert">
         <h2>The zoo could not open</h2>
         <p>${message}</p>
-        <p class="fallback-card__hint">Your tasks are safe — they are stored on this
+        <p class="fallback-card__hint">Your tasks are safe. They are stored on this
         device, not in the 3D scene.</p>
       </div>`;
   }
@@ -537,7 +537,7 @@ async function boot() {
       if (!zoo) { toast({ title: 'That group zoo doesn\u2019t exist any more' }); return; }
       const yes = await confirmDialog({
         title: `Join ${zoo.name}?`,
-        body: `${zoo.count} animal${zoo.count === 1 ? '' : 's'} waiting. Your own zoo is kept safe; you can go back to it from Friends any time.`,
+        body: `${zoo.count} animal${zoo.count === 1 ? '' : 's'} waiting. Your own zoo is kept safe, and you can go back to it from Friends any time.`,
         confirmLabel: 'Join the zoo',
       });
       if (!yes) return;
@@ -584,7 +584,7 @@ async function boot() {
   $('empty-add').addEventListener('click', addTask);
   $('tokens').addEventListener('click', () => views.show('customize'));
   $('avatar-btn').addEventListener('click', () => views.show('profile'));
-  $('brand').addEventListener('click', openPostcard);
+  $('brand').addEventListener('click', () => openPostcard(zoo));
 
   /* ------------------------------------------------------------ theme -- */
 

@@ -150,12 +150,12 @@
   --sp-8: 64px;
 
   /* --- form: 10px cards, pills for buttons and badges --- */
-  --radius-xs: 0px;
-  --radius-sm: 0px;
-  --radius:    0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-  --radius-pill: 0px;
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius:    16px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-pill: 999px;
 
   /* --- depth: pressed into paper. Hairline insets first; the only drops
      are the faint ones that keep panels legible over the 3D world. --- */

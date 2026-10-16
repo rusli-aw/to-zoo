@@ -213,26 +213,28 @@ export function buildEnvironment(zoo, space = null) {
   /* --------------------------------------------------------- ground ---- */
 
   // The wild: everything, all the way out. Lush, and never dirtied.
-  const wildGeo = plane(240, 240, { rot: [-Math.PI / 2, 0, 0], pos: [0, -0.02, -40] });
+  // Sits well below the enclosure floor's lowest bump, so the two never
+  // intersect (the crossing drew a stray ink line across the lawn).
+  const wildGeo = plane(240, 240, { rot: [-Math.PI / 2, 0, 0], pos: [0, -0.25, -40] });
   const wildMat = new THREE.MeshLambertMaterial({ color: color('grass-lush').clone(), map: wildTex });
   const wildGround = new THREE.Mesh(wildGeo, wildMat);
   wildGround.receiveShadow = quality.shadows;
   group.add(wildGround);
 
-  // The enclosure floor, gently undulating so it never reads as a sheet of card.
+  // The enclosure floor: a very gentle, smooth roll. It used to carry
+  // per-vertex noise and a clamped edge falloff, whose creases drew a
+  // straight dark line across the lawn under the painted pass.
   const zooGeo = plane(
     LAYOUT.maxX - LAYOUT.minX + 2.5,
     LAYOUT.maxZ - LAYOUT.minZ + 2.5,
     { rot: [-Math.PI / 2, 0, 0], pos: [0, 0.01, (LAYOUT.minZ + LAYOUT.maxZ) / 2] },
-    18, 14,
+    48, 40,
   );
   {
     const pos = zooGeo.attributes.position;
-    const r = rng(7);
     for (let i = 0; i < pos.count; i += 1) {
       const x = pos.getX(i), y = pos.getY(i);
-      const edge = Math.min(1, Math.hypot(x / 11, y / 9));
-      pos.setZ(i, Math.sin(x * 0.7) * 0.06 + Math.cos(y * 0.55) * 0.05 + (r() - 0.5) * 0.03 - edge * 0.05);
+      pos.setZ(i, Math.sin(x * 0.45) * Math.cos(y * 0.38) * 0.035);
     }
     zooGeo.computeVertexNormals();
   }

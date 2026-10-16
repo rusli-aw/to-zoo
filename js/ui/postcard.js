@@ -1,103 +1,111 @@
 /**
  * To-Zoo — the postcard.
  *
- * Tap the logo and a postcard from the people who made To-Zoo arrives: the
- * photo on the front, and on the back a handwritten note, a stamp, a
- * postmark, address lines and a trail of paw prints from each animal.
+ * Tap the logo and a postcard arrives. The front is a picture card with a
+ * scalloped edge: your own zoo, as it is right now, under big chunky
+ * "greetings from To-Zoo" lettering. Click it and it flips over to the back:
+ * a handwritten note from the three of us, a stamp, a postmark, address lines
+ * and a little doodle with paw prints.
  *
- * The photo is assets/team.jpg. Until it exists the frame shows a quiet
- * placeholder rather than a broken image.
+ * The stamp shows assets/team.jpg once it exists, and the elephant until then.
  */
 
 import { openDialog } from './dialog.js';
-import { portraitOf } from '../zoo/portraits.js';
+import { portraitOf, snapshotZoo } from '../zoo/portraits.js';
 
 const PHOTO = 'assets/team.jpg';
 
-/** Paw prints: elephant, lion, rabbit, each a pair, walking off the card. */
-const PAWS = `
-<svg class="postcard__paws" viewBox="0 0 260 64" aria-hidden="true">
-  <g fill="#d9703a">
-    <!-- elephant: a big round pad with toenail dots -->
-    <g transform="translate(14 22) rotate(-8)">
-      <ellipse cx="14" cy="16" rx="13" ry="12" fill="#f2dccb" stroke="#d9703a" stroke-width="3.5"/>
-      <circle cx="4" cy="2" r="2.6"/><circle cx="11" cy="-1" r="2.6"/><circle cx="18" cy="-1" r="2.6"/><circle cx="25" cy="2" r="2.6"/>
-    </g>
-    <g transform="translate(52 10) rotate(6)">
-      <ellipse cx="14" cy="16" rx="13" ry="12" fill="#f2dccb" stroke="#d9703a" stroke-width="3.5"/>
-      <circle cx="4" cy="2" r="2.6"/><circle cx="11" cy="-1" r="2.6"/><circle cx="18" cy="-1" r="2.6"/><circle cx="25" cy="2" r="2.6"/>
-    </g>
-    <!-- lion: a lobed pad and four toes -->
-    <g transform="translate(106 26) rotate(-10)">
-      <path d="M2 18c0-6 5-9 9-9s9 3 9 9c0 4-3 5-5 5-2 0-3-1.5-4-1.5S9 23 7 23c-2 0-5-1-5-5z"/>
-      <ellipse cx="1" cy="6" rx="2.6" ry="3.4"/><ellipse cx="7.5" cy="1" rx="2.6" ry="3.4"/>
-      <ellipse cx="14.5" cy="1" rx="2.6" ry="3.4"/><ellipse cx="21" cy="6" rx="2.6" ry="3.4"/>
-    </g>
-    <g transform="translate(140 12) rotate(8)">
-      <path d="M2 18c0-6 5-9 9-9s9 3 9 9c0 4-3 5-5 5-2 0-3-1.5-4-1.5S9 23 7 23c-2 0-5-1-5-5z"/>
-      <ellipse cx="1" cy="6" rx="2.6" ry="3.4"/><ellipse cx="7.5" cy="1" rx="2.6" ry="3.4"/>
-      <ellipse cx="14.5" cy="1" rx="2.6" ry="3.4"/><ellipse cx="21" cy="6" rx="2.6" ry="3.4"/>
-    </g>
-    <!-- rabbit: a long narrow foot, small toes -->
-    <g transform="translate(192 22) rotate(-6)">
-      <ellipse cx="7" cy="16" rx="5.5" ry="11"/>
-      <circle cx="2.5" cy="2" r="2"/><circle cx="7" cy="0" r="2"/><circle cx="11.5" cy="2" r="2"/>
-    </g>
-    <g transform="translate(222 10) rotate(8)">
-      <ellipse cx="7" cy="16" rx="5.5" ry="11"/>
-      <circle cx="2.5" cy="2" r="2"/><circle cx="7" cy="0" r="2"/><circle cx="11.5" cy="2" r="2"/>
-    </g>
-  </g>
+/** A line drawing of an elephant, in the doodle style of the card back. */
+const DOODLE = `
+<svg class="pc-back__doodle" viewBox="0 0 120 90" aria-hidden="true" fill="none" stroke="currentColor"
+     stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M30 44c0-14 10-24 24-24s25 9 25 22c0 6-2 10-2 14"/>
+  <path d="M30 44c-9-1-15-8-14-16 1-7 9-11 16-8"/>
+  <path d="M79 42c9-1 15-8 14-16-1-7-9-11-16-8"/>
+  <path d="M54 52c-1 8 1 14 6 17 5 3 10 1 11-4"/>
+  <circle cx="45" cy="38" r="2.4" fill="currentColor"/><circle cx="63" cy="38" r="2.4" fill="currentColor"/>
+  <path d="M38 58c-3 8-3 16-1 22M50 64v16M66 64v16M76 56c3 8 3 16 1 24"/>
+  <path d="M34 80h8M46 80h8M62 80h8M74 80h8"/>
 </svg>`;
 
-export function openPostcard() {
-  openDialog({
+const PAWS = `
+<svg class="pc-back__paws" viewBox="0 0 120 28" aria-hidden="true" fill="currentColor">
+  <g transform="translate(4 8)"><ellipse cx="8" cy="10" rx="7" ry="6"/><circle cx="2" cy="2" r="1.8"/><circle cx="6" cy="0" r="1.8"/><circle cx="10" cy="0" r="1.8"/><circle cx="14" cy="2" r="1.8"/></g>
+  <g transform="translate(44 6)"><path d="M1 12c0-4 3-6 6-6s6 2 6 6c0 3-2 4-3.5 4-1.3 0-2-1-2.5-1s-1.2 1-2.5 1C2.8 16 1 15 1 12z"/><ellipse cx="0.5" cy="4" rx="1.7" ry="2.2"/><ellipse cx="4.5" cy="1" rx="1.7" ry="2.2"/><ellipse cx="9.5" cy="1" rx="1.7" ry="2.2"/><ellipse cx="13.5" cy="4" rx="1.7" ry="2.2"/></g>
+  <g transform="translate(84 4)"><ellipse cx="5" cy="12" rx="4" ry="8"/><circle cx="2" cy="2" r="1.5"/><circle cx="5" cy="0.5" r="1.5"/><circle cx="8" cy="2" r="1.5"/></g>
+</svg>`;
+
+/** @param {import('../zoo/scene.js').ZooScene} [zoo] */
+export function openPostcard(zoo) {
+  let scene = '';
+  try { scene = zoo ? snapshotZoo(zoo) : ''; } catch { scene = ''; }
+  const year = new Date().getFullYear();
+
+  const dialog = openDialog({
     title: 'Behind To-Zoo',
     className: 'modal--postcard',
     body: `
-      <article class="postcard">
-        <figure class="postcard__photo">
-          <img src="${PHOTO}" alt="The three of us who made To-Zoo"
-               onerror="this.hidden = true; this.nextElementSibling.hidden = false">
-          <figcaption hidden>A photo of the three of us goes here</figcaption>
-          <span class="postcard__greeting">Greetings from To-Zoo</span>
-        </figure>
+      <button class="pc" type="button" aria-label="Postcard. Click to flip it over." aria-pressed="false" data-flip>
+        <span class="pc__inner">
 
-        <div class="postcard__back">
-          <div class="postcard__message">
-            <h3 class="postcard__title">Behind To-Zoo</h3>
-            <p>To-Zoo started with three students and a to-do list we kept not looking at.
-               Not because we didn't care. A list just doesn't care back.</p>
-            <p>So we gave every task a heartbeat. The essay you keep putting off is an
-               elephant, waiting by the gate. The quick email is a rabbit. They're patient,
-               but they notice when you're gone.</p>
-            <p>It's easier to show up for something that's waiting for you than for a
-               checkbox. Caring for a whole zoo gives the day a shape, and a small win
-               every time one of them gets to go home.</p>
-            <p class="postcard__sign">With love, the three of us</p>
-          </div>
+          <span class="pc__face pc-front">
+            <span class="pc-front__art" style="${scene ? `background-image:url(${scene})` : ''}"></span>
+            <span class="pc-front__dots"></span>
+            <span class="pc-front__greeting">greetings from…</span>
+            <span class="pc-front__name">TO-ZOO</span>
+            <span class="pc-front__hint">click to flip</span>
+          </span>
 
-          <div class="postcard__address">
-            <div class="postcard__stamp">
-              <img src="${portraitOf('elephant')}" alt="">
-              <span>To-Zoo</span>
-            </div>
-            <svg class="postcard__postmark" viewBox="0 0 120 120" aria-hidden="true">
-              <circle cx="60" cy="60" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
-              <circle cx="60" cy="60" r="34" fill="none" stroke="currentColor" stroke-width="1.5"/>
-              <text x="60" y="56" text-anchor="middle" font-size="13" fill="currentColor">TO-ZOO</text>
-              <text x="60" y="73" text-anchor="middle" font-size="11" fill="currentColor">${new Date().getFullYear()}</text>
-              <path d="M104 46c8 3 14 3 20 0M104 60c8 3 14 3 20 0M104 74c8 3 14 3 20 0" fill="none" stroke="currentColor" stroke-width="2"/>
-            </svg>
-            <div class="postcard__lines">
-              <p>To: every student who opened their laptop to work and ended up somewhere else</p>
-              <p>We've been there too.</p>
-              <p>Your animals will wait for you.</p>
-              <p>Just don't make them wait too long.</p>
-            </div>
-            ${PAWS}
-          </div>
-        </div>
-      </article>`,
+          <span class="pc__face pc-back">
+            <span class="pc-back__left">
+              <span class="pc-back__title">Behind To-Zoo</span>
+              <span class="pc-back__note">
+                To-Zoo started with three students and a to-do list we kept not looking at.
+                Not because we didn't care. A list just doesn't care back.
+              </span>
+              <span class="pc-back__note">
+                So we gave every task a heartbeat. The essay you keep putting off is an
+                elephant waiting by the gate. The quick email is a rabbit. They're patient,
+                but they notice when you're gone.
+              </span>
+              <span class="pc-back__note">
+                It's easier to show up for something that's waiting for you than for a
+                checkbox. Look after them, and they'll look after your day.
+              </span>
+              <span class="pc-back__foot">${DOODLE}${PAWS}</span>
+            </span>
+
+            <span class="pc-back__right">
+              <span class="pc-back__stamp">
+                <img src="${PHOTO}" alt="" onerror="this.onerror=null; this.src='${portraitOf('elephant')}'">
+              </span>
+              <svg class="pc-back__postmark" viewBox="0 0 110 110" aria-hidden="true">
+                <circle cx="55" cy="55" r="40" fill="none" stroke="currentColor" stroke-width="2.4"/>
+                <circle cx="55" cy="55" r="31" fill="none" stroke="currentColor" stroke-width="1.4"/>
+                <text x="55" y="52" text-anchor="middle" font-size="12" fill="currentColor">TO ZOO</text>
+                <text x="55" y="68" text-anchor="middle" font-size="11" fill="currentColor">${year}</text>
+              </svg>
+              <span class="pc-back__lines">
+                <span>To every student who opened</span>
+                <span>their laptop to work and</span>
+                <span>ended up somewhere else.</span>
+                <span>We've been there too. ♡</span>
+              </span>
+              <span class="pc-back__sign">Designed with ♥ by the three of us</span>
+            </span>
+          </span>
+
+        </span>
+      </button>`,
+    setup(panel) {
+      const card = panel.querySelector('[data-flip]');
+      // Start focus on the close button, so the card is not ringed on open.
+      requestAnimationFrame(() => panel.querySelector('[data-close]')?.focus({ preventScroll: true }));
+      card.addEventListener('click', () => {
+        const flipped = card.classList.toggle('is-flipped');
+        card.setAttribute('aria-pressed', String(flipped));
+      });
+    },
   });
+  return dialog;
 }

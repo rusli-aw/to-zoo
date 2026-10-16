@@ -57,7 +57,7 @@ export function renderFriendsView(root, ctx) {
 
     <p class="friends-foot">
       These friends are sample data for the prototype. Sharing produces a real
-      link that carries only your counts — never your task titles.
+      link that carries only your counts, never your task titles.
     </p>`;
 
   root.querySelector('[data-share]').addEventListener('click', () => openShare(me, ctx));
@@ -73,7 +73,7 @@ function groupSection(state, group) {
     return `
       <section class="group-zoo">
         <h3 class="group-zoo__title">Group zoo</h3>
-        <p class="group-zoo__lede">One zoo for your flat, study group or team. Everyone adds tasks; anyone can send an animal home.</p>
+        <p class="group-zoo__lede">One zoo for your flat, study group or team. Everyone adds tasks, and anyone can send an animal home.</p>
         <div class="group-zoo__row">
           <input class="field__input" type="text" placeholder="Name it, e.g. Flat 4" maxlength="40" data-group-name>
           <button class="btn btn--primary" type="button" data-group-create>Start a group zoo</button>
@@ -185,11 +185,11 @@ function compare(friend, me) {
   const healthGap = me.health - friend.health;
 
   if (releasedGap >= 3) return `You have released ${releasedGap} more animals than ${first(friend.name)}.`;
-  if (releasedGap <= -3) return `${first(friend.name)} has been busy — ${Math.abs(releasedGap)} more releases.`;
+  if (releasedGap <= -3) return `${first(friend.name)} has been busy with ${Math.abs(releasedGap)} more releases.`;
   if (healthGap <= -12) return `${first(friend.name)}'s animals are a little happier right now.`;
   if (healthGap >= 12) return `Your animals are in better spirits at the moment.`;
   if (friend.streak > me.streak + 2) return `${first(friend.name)} is on a ${friend.streak}-day streak.`;
-  if (me.streak > friend.streak + 2) return `You are ahead on streak — ${me.streak} days.`;
+  if (me.streak > friend.streak + 2) return `You are ahead on streak with ${me.streak} days.`;
   return `You two are keeping a similar pace.`;
 }
 
@@ -202,7 +202,7 @@ function openShare(me, ctx) {
 
   openDialog({
     title: 'Share your zoo',
-    subtitle: 'Counts only — no task titles travel with the link.',
+    subtitle: 'Counts only. No task titles travel with the link.',
     body: `
       <div class="share">
         <div class="share-card" id="share-card">

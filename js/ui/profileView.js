@@ -93,7 +93,7 @@ export function renderProfileView(root, ctx) {
       </div>
       <p class="block-note">
         ${stats.completedToday > 0
-          ? `${stats.completedToday} done today${stats.goalMet ? ' — daily goal met.' : `, ${stats.goal - stats.completedToday} to the goal.`}`
+          ? `${stats.completedToday} done today${stats.goalMet ? '. Daily goal met.' : `, ${stats.goal - stats.completedToday} to the goal.`}`
           : 'Nothing released today yet.'}
       </p>
     </section>

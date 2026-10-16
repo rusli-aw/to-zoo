@@ -88,7 +88,7 @@ export function createMoodBars(zoo, population) {
         bar.fill.style.width = `${value}%`;
         bar.el.dataset.stage = stage.key;
         bar.face.innerHTML = glyph(stage.emoji);
-        bar.el.title = `${ANIMALS[entry.task.animalType].label}: ${entry.task.title} — ${stage.label} ${value}%`;
+        bar.el.title = `${ANIMALS[entry.task.animalType].label}: ${entry.task.title}. ${stage.label}, ${value}%`;
       }
 
       // Sit the bar just above the animal's head.

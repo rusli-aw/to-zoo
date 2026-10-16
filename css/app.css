@@ -713,3 +713,17 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
 }
 .sound-btn .ic { width: 20px; height: 20px; }
 .sound-btn[aria-pressed="false"] { color: var(--ink-faint); }
+
+/* Rounded everywhere: controls are soft pills, panels soft cards. */
+:is(.btn, .chip, .segmented, .segmented button, .nav, .nav__item, .group-chip, .sound-btn,
+    .today, .piggy, .announce, .status-line, .mood-bar, .search__input, .field__input, .select select) {
+  border-radius: var(--radius-pill);
+}
+:is(.sheet, .health, .hover-card, .card, .shop-card, .season, .stat, .badge, .me-card, .friend-card,
+    .group-zoo, .animal-card, .modal__panel, .toast, .neglect, .card__portrait, .shop-card__img,
+    .shop-card__art, .stamp__art) {
+  border-radius: var(--radius);
+}
+.avatar-btn, .avatar-mark { border-radius: 50%; }
+.segmented { padding: 3px; }
+.btn--add { border-radius: var(--radius-pill); }

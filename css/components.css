@@ -1094,7 +1094,7 @@ textarea.field__input { resize: vertical; min-height: 72px; }
   gap: var(--sp-1);
   padding: var(--sp-3) var(--sp-2);
   border: 1px solid var(--line-strong);
-  border-radius: 0;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink);
   cursor: pointer;
@@ -1139,12 +1139,12 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 
 .chip, .segmented, .field__input, .search__input, .select select,
 .animal-card, .task-row, .shop-card, .season, .badge, .stat, .panel-block {
-  border-radius: 0;
+  border-radius: var(--radius);
 }
 .chip.is-on { background: var(--action); color: var(--on-action); border-color: var(--ink); }
 .segmented { border: 1px solid var(--line-strong); }
 .segmented button.is-on { background: var(--action); color: var(--on-action); box-shadow: none; }
-.mood-bar { border-radius: 0; }
+.mood-bar { border-radius: var(--radius); }
 
 /* ── bedtime ── */
 .mood-bars[data-sleeping] .mood-bar__face,
@@ -1258,128 +1258,180 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 .shop-card__img { display: block; width: 100%; height: 100%; object-fit: cover; box-shadow: inset 0 0 0 1px var(--line-strong); }
 
 /* ═════════════════════════════════════════════════ postcard ══
-   A real postcard, landscape: the photo front on the left, the written
-   back on the right, split by a centre line, with stamp and postmark. */
+   A flip postcard. The front is a scalloped picture card with your zoo on
+   it; the back is plain card stock with a note, stamp and address lines. */
 
 .brand { pointer-events: auto; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; font: inherit; }
 .brand__mark { transition: transform var(--dur) var(--ease-bounce); }
 .brand:hover .brand__mark { transform: rotate(-8deg); }
 
+/* The dialog itself disappears: just the card, floating over the zoo. */
 .modal--postcard .modal__panel {
-  width: min(920px, calc(100vw - 32px));
-  max-height: calc(100dvh - 32px);
+  width: min(780px, calc(100vw - 32px));
+  max-height: none;
+  background: none;
+  box-shadow: none;
+  border-radius: 0 !important;
+  overflow: visible;
+}
+.modal--postcard .modal__head { position: absolute; top: -18px; right: -14px; z-index: 3; padding: 0; }
+.modal--postcard .modal__head > div { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.modal--postcard .icon-btn { background: #fffaf2; box-shadow: 0 2px 8px rgba(87, 61, 33, .25); }
+.modal--postcard .modal__body { padding: 0; overflow: visible; }
+
+.pc {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
   padding: 0;
-  background: #fbf5ea;
-  border-radius: 4px;
-  box-shadow: 0 2px 0 #e7dccb, 0 30px 60px rgba(87, 61, 33, .32);
-  transform: translate(-50%, -50%) rotate(-1.2deg);
+  border: 0;
+  background: none;
+  perspective: 1600px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
 }
-/* Card stock: a faint warm grain. */
-.modal--postcard .modal__panel::before {
-  content: "";
-  position: absolute; inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(160, 120, 70, .05), transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(160, 120, 70, .06), transparent 45%);
-  border-radius: inherit;
-}
-.modal--postcard .modal__head {
-  position: absolute; top: 6px; right: 6px; z-index: 2; padding: 0;
-}
-.modal--postcard .modal__head > div {
-  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
-}
-.modal--postcard .modal__body { padding: 0; overflow-y: auto; }
-
-.postcard {
-  display: grid;
-  grid-template-columns: 0.95fr 1.25fr;
-  min-height: 460px;
-  color: #6e3f22;
-}
-
-.postcard__photo {
+.pc__inner {
   position: relative;
-  margin: 14px 0 14px 14px;
-  border: 8px solid #fff;
-  box-shadow: 0 1px 4px rgba(87, 61, 33, .2);
-  background: #efe3d2;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  transform: rotate(-1.5deg);
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 700ms cubic-bezier(.3, 1.3, .5, 1);
+  transform: rotate(-2deg);
 }
-.postcard__photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.postcard__photo img[hidden], .postcard__photo figcaption[hidden] { display: none; }
-.postcard__photo figcaption { padding: var(--sp-5); text-align: center; color: #c9893f; font-weight: 700; }
-.postcard__greeting {
-  position: absolute; left: 0; right: 0; bottom: 10px;
-  text-align: center;
-  font-weight: 800;
-  font-size: var(--step-1);
-  color: #fff;
-  text-shadow: 0 1px 6px rgba(87, 61, 33, .55);
+.pc.is-flipped .pc__inner { transform: rotate(1.5deg) rotateY(180deg); }
+.pc:hover .pc__inner { transform: rotate(-1deg) translateY(-3px); }
+.pc.is-flipped:hover .pc__inner { transform: rotate(1deg) rotateY(180deg) translateY(-3px); }
+.pc__face {
+  position: absolute;
+  inset: 0;
+  display: block;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  filter: drop-shadow(0 18px 30px rgba(60, 40, 20, .35));
+}
+
+/* ── front ── */
+.pc-front {
+  --s: 13px;
+  padding: var(--s);
+  background: #f6ecdf;
+  /* Scalloped edge: a ring of circles around a solid middle. */
+  -webkit-mask: conic-gradient(#000 0 0) content-box, radial-gradient(closest-side, #000 97%, #0000) 0 0 / calc(2 * var(--s)) calc(2 * var(--s)) round;
+          mask: conic-gradient(#000 0 0) content-box, radial-gradient(closest-side, #000 97%, #0000) 0 0 / calc(2 * var(--s)) calc(2 * var(--s)) round;
+}
+.pc-front__art, .pc-front__dots {
+  position: absolute;
+  inset: calc(var(--s) + 10px);
+  border-radius: 18px;
+}
+.pc-front__art {
+  background: #cfe0d8 center / cover no-repeat;
+  -webkit-mask: radial-gradient(120% 100% at 50% 50%, #000 70%, #0000 100%);
+}
+.pc-front__dots {
+  background: radial-gradient(rgba(255, 255, 255, .22) 1px, transparent 1.5px) 0 0 / 6px 6px;
+  mix-blend-mode: screen;
+}
+.pc-front__greeting {
+  position: absolute;
+  left: 9%; top: 11%;
+  font-size: clamp(16px, 3.2vw, 26px);
+  font-weight: 700;
+  color: #7a4a2b;
+  transform: rotate(-8deg);
+  text-shadow: 0 0 6px #fff, 0 0 2px #fff;
   font-variation-settings: "INFM" 100;
 }
+.pc-front__name {
+  position: absolute;
+  left: 7%; top: 19%;
+  font-size: clamp(54px, 13vw, 116px);
+  font-weight: 800;
+  line-height: .9;
+  letter-spacing: .02em;
+  color: #f0c48a;
+  -webkit-text-stroke: 3px #9a5a2a;
+  paint-order: stroke fill;
+  text-shadow: 4px 5px 0 #9a5a2a, 0 0 24px rgba(255, 245, 230, .6);
+  transform: rotate(-7deg);
+  font-variation-settings: "INFM" 100, "BNCE" 60;
+}
+.pc-front__hint {
+  position: absolute;
+  right: calc(var(--s) + 18px); bottom: calc(var(--s) + 14px);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 253, 248, .9);
+  color: #8a4a26;
+  font-size: 13px;
+  font-weight: 700;
+}
 
-.postcard__back {
+/* ── back ── */
+.pc-back {
+  transform: rotateY(180deg);
   display: grid;
   grid-template-columns: 1.15fr 1fr;
-  padding: var(--sp-5) var(--sp-5) var(--sp-4);
-  gap: var(--sp-5);
-}
-.postcard__message {
-  padding-right: var(--sp-5);
-  border-right: 1.5px solid rgba(110, 63, 34, .35);
-  font-size: var(--step--1);
-  line-height: 1.55;
+  gap: 0;
+  padding: 7% 6% 5%;
+  background: #f6ecdf;
+  border-radius: 14px;
+  color: #7a4a2b;   /* walnut ink */
   font-variation-settings: "INFM" 100;
 }
-.postcard__message p { margin: 0 0 var(--sp-3); }
-.postcard__title { margin: 0 0 var(--sp-3); font-size: var(--step-1); color: #d9703a; }
-.postcard__sign { font-weight: 800; color: #d9703a; }
-
-.postcard__address { position: relative; display: flex; flex-direction: column; padding-top: 4px; }
-.postcard__stamp {
-  align-self: flex-end;
-  width: 82px;
-  padding: 6px 6px 4px;
-  background: #fffaf2;
-  transform: rotate(3deg);
-  /* Perforated edge. */
-  -webkit-mask: conic-gradient(#000 0 0) content-box, radial-gradient(circle 3px, #0000 96%, #000) -4px -4px / 8px 8px;
-          mask: conic-gradient(#000 0 0) content-box, radial-gradient(circle 3px, #0000 96%, #000) -4px -4px / 8px 8px;
-  filter: drop-shadow(0 1px 1px rgba(87, 61, 33, .25));
+.pc-back__left {
+  display: flex;
+  flex-direction: column;
+  gap: .6em;
+  padding-right: 6%;
+  border-right: 2px solid rgba(122, 74, 43, .45);
+  font-size: clamp(11px, 1.6vw, 14.5px);
+  line-height: 1.45;
 }
-.postcard__stamp img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
-.postcard__stamp span { display: block; text-align: center; font-size: 9px; font-weight: 800; color: #d9703a; letter-spacing: .08em; }
-.postcard__postmark {
-  position: absolute; top: 18px; right: 52px;
-  width: 92px;
-  color: rgba(110, 63, 34, .45);
+.pc-back__title { font-size: 1.45em; font-weight: 800; }
+.pc-back__note { display: block; }
+.pc-back__foot { margin-top: auto; display: flex; align-items: flex-end; gap: 8px; }
+.pc-back__doodle { width: 30%; max-width: 92px; }
+.pc-back__paws { width: 34%; max-width: 110px; color: #d9703a; }
+
+.pc-back__right { position: relative; display: flex; flex-direction: column; padding-left: 7%; }
+.pc-back__stamp {
+  --s: 5px;
+  align-self: flex-end;
+  width: 27%;
+  min-width: 64px;
+  padding: calc(var(--s) + 4px);
+  background: #e3a36e;
+  -webkit-mask: conic-gradient(#000 0 0) content-box, radial-gradient(closest-side, #000 97%, #0000) 0 0 / calc(2 * var(--s)) calc(2 * var(--s)) round;
+          mask: conic-gradient(#000 0 0) content-box, radial-gradient(closest-side, #000 97%, #0000) 0 0 / calc(2 * var(--s)) calc(2 * var(--s)) round;
+  transform: rotate(3deg);
+}
+.pc-back__stamp img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; background: #f6ecdf; }
+.pc-back__postmark {
+  position: absolute; top: 2%; right: 26%;
+  width: 26%;
+  color: rgba(201, 112, 58, .55);
   transform: rotate(-14deg);
   font-family: var(--font-display);
   font-weight: 800;
 }
-.postcard__lines { margin-top: var(--sp-5); }
-.postcard__lines p {
-  margin: 0;
-  padding: 10px 0 4px;
-  border-bottom: 1.5px solid rgba(110, 63, 34, .3);
-  font-size: var(--step--1);
-  line-height: 1.35;
-  font-variation-settings: "INFM" 100;
-}
-.postcard__lines p:first-child { font-weight: 700; }
-.postcard__paws { display: block; width: 100%; height: auto; aspect-ratio: 260 / 64; margin-top: auto; padding-top: var(--sp-4); }
+.pc-back__lines { margin-top: auto; display: flex; flex-direction: column; font-size: clamp(11px, 1.5vw, 14px); }
+.pc-back__lines span { padding: .55em 0 .2em; border-bottom: 1.8px solid rgba(122, 74, 43, .4); }
+.pc-back__sign { margin-top: .9em; align-self: flex-end; font-size: clamp(9px, 1.15vw, 11.5px); font-weight: 700; }
 
-@media (max-width: 760px) {
-  .postcard { grid-template-columns: 1fr; }
-  .postcard__photo { margin: 14px 14px 0; aspect-ratio: 4 / 3; }
-  .postcard__back { grid-template-columns: 1fr; }
-  .postcard__message { border-right: 0; border-bottom: 1.5px solid rgba(110, 63, 34, .35); padding: 0 0 var(--sp-4); }
-  .modal--postcard .modal__panel { left: 50%; top: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%); border-radius: 4px; }
+@media (max-width: 640px) {
+  /* Portrait card on phones, so the back stays readable. */
+  .pc { aspect-ratio: 3 / 4.4; }
+  .pc-front__name { top: 16%; }
+  .pc-back { grid-template-columns: 1fr; grid-template-rows: auto 1fr; padding: 8% 7% 6%; }
+  .pc-back__left { border-right: 0; border-bottom: 2px solid rgba(122, 74, 43, .45); padding: 0 0 5%; font-size: 12px; }
+  .pc-back__right { padding: 5% 0 0; }
+  .pc-back__stamp { width: 22%; position: absolute; top: 5%; right: 0; }
+  .pc-back__postmark { width: 20%; right: 20%; top: 4%; }
+  .pc-back__lines { margin-top: 18%; font-size: 12px; }
 }
 
 /* ── owner tag on a pet, in group zoos ── */
@@ -1402,3 +1454,6 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 .name-form__or::before, .name-form__or::after { content: ""; flex: 1; border-top: 1px solid var(--line-strong); }
 .mood-bar[data-name-only] :is(.mood-bar__face, .mood-bar__track) { display: none; }
 .mood-bar[data-name-only] .mood-bar__owner { padding: 0 4px; }
+.modal--postcard .modal__panel { border: 0 !important; box-shadow: none !important; outline: 0; }
+.pc:focus { outline: none; }
+.pc:focus-visible .pc__face { outline: 3px solid var(--focus); outline-offset: 4px; }

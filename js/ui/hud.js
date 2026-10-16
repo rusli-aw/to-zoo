@@ -161,7 +161,7 @@ export function createHud(handlers = {}) {
       els.ring.style.strokeDashoffset = String(RING * (1 - stats.progress));
       els.today.classList.toggle('is-met', stats.goalMet);
       els.today.title = stats.goalMet
-        ? `Daily goal met — ${stats.completedToday} completed today`
+        ? `Daily goal met with ${stats.completedToday} done today`
         : `${stats.completedToday} of ${stats.goal} completed today`;
 
       // ── the piggy bank ──

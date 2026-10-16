@@ -187,7 +187,7 @@ export function suggestAnimal(title, dueDate = null, now = Date.now()) {
   return {
     animalType,
     confident: Math.abs(score - 2.3) > 0.35 && Math.abs(score - 1.35) > 0.35,
-    reason: `${spec.label} — ${reason}`,
+    reason: `${spec.label}. ${reason}`,
     date: found,
   };
 }
