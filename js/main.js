@@ -575,6 +575,7 @@ async function boot() {
       zoo,
       environment,
       population,
+      views,
       onFinish({ demo }) {
         finishOnboarding();
         if (demo) loadDemo();

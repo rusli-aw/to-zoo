@@ -1,15 +1,13 @@
 /**
  * To-Zoo — first run, as a tour of the real zoo.
  *
- * The old version explained the app with drawings on cards. This one explains
- * it with the thing itself: three animals walk into your actual enclosure,
- * one of them goes home and pays you for it, and one of them gives up waiting
- * while you watch. Nothing here is a mock-up — it is the same scene, the same
- * animals and the same animations the app uses in earnest.
+ * The app explains itself with itself: three animals walk into your actual
+ * enclosure and get introduced one at a time, one of them goes home and pays
+ * for it, the shop and the shared zoos open as themselves, and an elephant
+ * gives up waiting while you watch. Nothing here is a mock-up.
  *
- * It never touches your task list. The animals are built directly and thrown
- * away at the end, and any real animals you already have are hidden for the
- * duration so the stage is clear.
+ * It never touches your task list. The cast is built directly and thrown away
+ * at the end, and real animals are hidden while it runs.
  */
 
 import * as THREE from 'three';
@@ -37,31 +35,49 @@ const STEPS = [
         + 'an animal in your care, and finishing it sends one home.',
   },
   {
-    key: 'sizes',
-    title: 'Three sizes of animal.',
-    body: 'An <b>elephant</b> is the big one you keep avoiding — the elephant in '
-        + 'the room. A <b>lion</b> is solid, middling work. A <b>rabbit</b> is a quick win. '
-        + 'Type the task and To-Zoo picks for you.',
+    key: 'elephant',
+    title: 'The elephant is your big one.',
+    body: 'The task you keep putting off. The elephant in the room.',
+  },
+  {
+    key: 'lion',
+    title: 'The lion is middling work.',
+    body: 'Important, but manageable. An afternoon, not a fortnight.',
+  },
+  {
+    key: 'rabbit',
+    title: 'The rabbit is a quick win.',
+    body: 'Five minutes and it is gone. Type a task and To-Zoo picks the animal for you.',
   },
   {
     key: 'release',
     title: 'Finish a task. Send one home.',
     body: 'The gate opens, the animal walks back into the wild, and you are paid '
-        + 'for looking after it. Tokens buy decorations, accessories and whole seasons.',
+        + 'in tokens for looking after it.',
+  },
+  {
+    key: 'shop',
+    title: 'Spend your tokens here.',
+    body: 'Decorations for the zoo, accessories for your animals, and whole seasons.',
   },
   {
     key: 'neglect',
     title: 'Leave one too long and it gives up.',
-    body: 'Moods drain on their own. Restless, then miserable, and eventually it '
-        + 'lies down and waits. It never dies and it never tells you off — the '
-        + 'moment you do the task, it is completely fine again.',
+    body: 'Moods drain on their own, and eventually it lies down and waits. It never '
+        + 'dies and it never tells you off. The moment you do the task, it is fine again.',
+  },
+  {
+    key: 'group',
+    title: 'Share a zoo with other people.',
+    body: 'One for your flat, one for a group project. Everyone adds tasks, and anyone '
+        + 'can send an animal home.',
   },
   {
     key: 'why',
-    title: 'Built for people who bounce off to-do lists.',
-    body: 'Students, and anyone whose attention does not run on streaks and guilt. '
-        + 'There is no streak to break and nothing punishes a long list — a full '
-        + 'zoo is just a busy week. Only neglect shows.',
+    title: 'Why we built it this way.',
+    body: 'For students, and for people with ADHD or attention difficulties who bounce '
+        + 'off ordinary to-do lists. No streaks to break. Nothing punishes a long list. '
+        + 'Only neglect shows.',
   },
 ];
 
@@ -70,9 +86,10 @@ const STEPS = [
  * @param {import('../zoo/scene.js').ZooScene} opts.zoo
  * @param {any} [opts.environment]   for opening the gate during the release
  * @param {any} [opts.population]    real animals, hidden while the tour runs
+ * @param {any} [opts.views]         so the shop and shared zoos can show themselves
  * @param {(result: {demo: boolean}) => void} opts.onFinish
  */
-export function runOnboarding({ zoo, environment, population, onFinish }) {
+export function runOnboarding({ zoo, environment, population, views, onFinish }) {
   let index = 0;
   let disposed = false;
 
@@ -105,6 +122,7 @@ export function runOnboarding({ zoo, environment, population, onFinish }) {
   /** Fade a newcomer in rather than popping it into existence. */
   function arrive(animal, delay = 0) {
     animal.root.visible = true;
+    animal.setAttention(1);
     if (reduced()) return;
     const base = animal.spec.scale;
     animal.root.scale.setScalar(base * 0.01);
@@ -122,37 +140,67 @@ export function runOnboarding({ zoo, environment, population, onFinish }) {
   /**
    * Camera. zoo.fly() rather than zoo.focusOn(): the scene keeps a camera
    * "director" after the opening shot, and while one is set the focus rig is
-   * bypassed entirely — focusOn() silently does nothing. fly() is the right
-   * tool anyway, since it eases in and out instead of chasing.
+   * bypassed entirely, so focusOn() silently does nothing. fly() also eases
+   * in and out instead of chasing.
    */
   const shot = (cam, look, seconds = 1.6) => zoo.fly([cam], [look], reduced() ? 0 : seconds);
   const home = (seconds = 1.5) => zoo.flyHome(reduced() ? 0 : seconds);
+
+  /**
+   * A three-quarter shot of one animal. Deliberately backed off: a close-up
+   * fills the screen with one body and loses the comparison between the three,
+   * which is the only reason these steps exist.
+   */
+  function portrait(type, lift, back) {
+    const at = SPOTS[type];
+    shot(
+      new THREE.Vector3(at.x * 0.5 + 0.9, lift, at.z + back),
+      at.clone().setY(0.8),
+      1.5,
+    );
+  }
+
+  /** Whether the tour has a view open, so it can close it on the way out. */
+  let openedSheet = false;
+  function sheet(name) {
+    if (!views) return;
+    if (name === 'zoo' && !openedSheet) return;
+    openedSheet = name !== 'zoo';
+    views.show(name);
+  }
 
   /* ---------------------------------------------------------- the beats -- */
 
   const BEATS = {
     welcome() {
+      sheet('zoo');
       home();
     },
 
-    sizes() {
-      const order = ['elephant', 'lion', 'rabbit'];
-      order.forEach((type, i) => {
+    elephant() {
+      sheet('zoo');
+      // All three arrive together: the sizes only mean anything side by side.
+      ['elephant', 'lion', 'rabbit'].forEach((type, i) => {
         const animal = summon(type);
-        animal.setAttention(1);
-        setTimeout(() => !disposed && arrive(animal), i * 260);
+        if (!animal.root.visible) setTimeout(() => !disposed && arrive(animal), i * 240);
       });
-      // Down among them, so the size difference is the whole shot.
-      shot(new THREE.Vector3(0, 2.7, 3.4), new THREE.Vector3(0, 0.9, -2.3), 1.8);
+      portrait('elephant', 2.9, 7.6);
+    },
+
+    lion() {
+      portrait('lion', 2.5, 6.8);
+    },
+
+    rabbit() {
+      portrait('rabbit', 2.0, 5.6);
     },
 
     release() {
+      sheet('zoo');
       const animal = summon('rabbit');
       animal.root.visible = true;
       environment?.openGate(1);
 
-      // The same walk the real release plays: out through the gate, shrinking
-      // into the distance, then gone.
       const from = animal.root.position.clone();
       const gate = new THREE.Vector3(LAYOUT.gate.x, 0, LAYOUT.gate.z);
       const away = LAYOUT.wildTarget.clone();
@@ -183,26 +231,30 @@ export function runOnboarding({ zoo, environment, population, onFinish }) {
         }
       });
       stopFrames.push(stop);
-      // Wide and slightly off-axis: the point of this beat is the whole walk
-      // from the enclosure, through the gate, into the distance.
+      // Wide and slightly off-axis: this beat is the whole walk out.
       shot(new THREE.Vector3(1.8, 3.6, 8.6), new THREE.Vector3(0, 0.8, -4.5), 1.4);
     },
 
+    shop() {
+      sheet('customize');
+    },
+
     neglect() {
+      sheet('zoo');
       const animal = summon('elephant');
       animal.root.visible = true;
       animal.setAttention(0);
-      // Anxious first, then it stops standing up altogether.
       animal.setUrgency(1);
       setTimeout(() => !disposed && animal.setPose('lie'), reduced() ? 0 : 900);
-      shot(
-        new THREE.Vector3(SPOTS.elephant.x + 2.3, 1.9, SPOTS.elephant.z + 3.9),
-        SPOTS.elephant.clone().setY(0.75),
-        1.8,
-      );
+      portrait('elephant', 2.2, 6.4);
+    },
+
+    group() {
+      sheet('zoos');
     },
 
     why() {
+      sheet('zoo');
       // Back on its feet, which is the point being made.
       cast.elephant?.setPose('stand');
       cast.elephant?.setUrgency(0.15);
@@ -265,6 +317,7 @@ export function runOnboarding({ zoo, environment, population, onFinish }) {
     }
     for (const root of hidden) root.visible = true;
     environment?.openGate(0);
+    if (openedSheet) views?.show('zoo');
     home(0.9);
     wrap.remove();
     delete document.body.dataset.tour;
