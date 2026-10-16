@@ -928,10 +928,12 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 /* The coin level, clipped to the piggy's rough body. */
 .piggy__fill {
   position: absolute;
-  left: 12%; right: 10%;
-  bottom: 12%;
+  left: 18%; right: 20%;
+  bottom: 24%;
   height: 0%;
-  border-radius: 0 0 40% 40% / 0 0 60% 60%;
+  max-height: 50%;
+  /* Clipped to the pig's round belly so it never shows outside the drawing. */
+  border-radius: 50% 50% 46% 46% / 40% 40% 60% 60%;
   background: linear-gradient(180deg,
     color-mix(in srgb, var(--accent) 70%, white), var(--accent));
   opacity: .55;
@@ -1738,4 +1740,14 @@ body[data-tour="open"] :is(.hud--bl, .hud--br, .nav) {
   .tour__foot { flex-wrap: wrap; }
   .tour__actions { width: 100%; }
   .tour__actions .btn { flex: 1; min-width: 0; }
+@media (max-width: 640px) {
+  .chips.chips--filter { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: none; }
+  .chips.chips--filter::-webkit-scrollbar { display: none; }
+  .chips.chips--filter .chip { flex: none; }
+}
+@media (max-width: 640px) {
+  .modal--add .modal__panel { width: auto; }
+  .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+  .shop-card { padding: var(--sp-2); }
+  .shop-card__name { font-size: var(--step--1); }
 }

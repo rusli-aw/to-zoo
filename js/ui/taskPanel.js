@@ -16,6 +16,7 @@ import { deleteTask } from '../store.js';
 import { confirmDialog, openDialog } from './dialog.js';
 import { openAddTask } from './addTask.js';
 import { glyph } from './icons.js';
+import { portraitOf } from '../zoo/portraits.js';
 
 /**
  * @param {import('../model.js').Task} task
@@ -39,7 +40,7 @@ export function openTaskPanel(task, handlers) {
     body: `
       <div class="task-panel">
         <div class="task-panel__animal">
-          <span class="task-panel__emoji" aria-hidden="true">${glyph(spec.emoji)}</span>
+          <span class="task-panel__emoji" aria-hidden="true">${portraitOf(task.animalType) ? `<img src="${portraitOf(task.animalType)}" alt="">` : glyph(spec.emoji)}</span>
           <div>
             <span class="task-panel__type">${spec.label}</span>
             <span class="task-panel__size">${spec.sizeWord} task</span>

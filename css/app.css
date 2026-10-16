@@ -502,8 +502,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     pointer-events: none;
     box-shadow: var(--glass-edge);
   }
-  .app.has-announce .hud-strip { top: 28px; }
-  :is(.today, .piggy, .avatar-btn) {
+    :is(.today, .piggy, .avatar-btn) {
     --glass: off;
     background: transparent !important;
     box-shadow: none !important;
@@ -622,7 +621,7 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.announce, .app.has-announce .hud-strip { display: none !important; }
+.announce { display: none !important; }
 .app.has-announce :is(.hud--tl, .hud--tr) { top: var(--sp-5); }
 .shop-note, .group__hint { display: none; }
 
@@ -692,3 +691,50 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
 }
 .modal--add .animal-card.is-on, .season.is-on, .chip.is-on { background-color: var(--action); }
 .nav__item.is-active { background: var(--action); }
+
+/* ═══════════════════════════════════════════ final UI pass ══ */
+
+/* Task panel: the real animal, not a line icon. */
+.task-panel__emoji { width: 52px; height: 52px; flex: none; border-radius: 12px; overflow: hidden; display: grid; place-items: center; }
+.task-panel__emoji img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Task cards never push past their row: the note shrinks and truncates. */
+.card__main { min-width: 0; flex: 1; }
+.card__title { overflow-wrap: anywhere; }
+.card__meta { min-width: 0; flex-wrap: wrap; row-gap: 0; }
+.card__note { min-width: 0; flex: 1 1 140px; }
+
+/* A softer, still visible keyboard focus ring. */
+:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent-deep) 70%, transparent); outline-offset: 3px; }
+.btn:focus:not(:focus-visible) { outline: none; }
+
+@media (max-width: 640px) {
+  /* Top bar: one white strip, logo mark only, counters to the right. */
+  .hud-strip { background: #fff; box-shadow: 0 1px 2px rgba(87, 61, 33, .06), 0 6px 18px rgba(87, 61, 33, .1); height: 66px; }
+  .brand__name { display: none; }
+  .hud--tl, .hud--tr { top: 12px; }
+  .hud--tr { gap: 6px; }
+  .today { width: 40px; height: 40px; }
+  .sound-btn { width: 36px; height: 36px; }
+  .avatar-btn { width: 38px; height: 38px; }
+  .piggy { padding: 4px 10px 4px 4px; }
+  .piggy__art { width: 32px; height: 28px; }
+
+  /* Bottom nav: tabs stay inside the bar. */
+  .nav { border-radius: 22px 22px 0 0; padding-top: 6px; }
+  .nav__item { border-radius: 14px; padding: 6px 8px; }
+  .nav__badge { top: 0; right: 4px; }
+
+  /* Filter chips: one scrollable row instead of an orphan on line two. */
+  .chips--filter { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: none; padding-bottom: 2px; }
+  .chips--filter::-webkit-scrollbar { display: none; }
+  .chips--filter .chip { flex: none; }
+  .card__note { display: none; }
+  .card__worth { flex: none; }
+}
+
+@media (max-width: 640px) {
+  .nav { align-items: center; }
+  .app .nav__item { height: 50px; flex: 1; max-width: 76px; justify-content: center; padding: 0 4px; border-radius: 14px; }
+  .app .nav__badge { position: absolute; top: 2px; right: 10px; min-width: 16px; height: 16px; font-size: 10px; }
+}

@@ -395,8 +395,10 @@ export function buildDecorations(zoo, space = null) {
     let footprint = FOOTPRINT[item.build] ?? 0.7;
     if (footprint > 0) {
       const box = new THREE.Box3().setFromObject(root);
-      const half = Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2;
-      if (Number.isFinite(half)) footprint = Math.max(footprint, half * 0.9);
+      // Half the diagonal: the circle covers every corner, whichever way
+      // the prop is turned (a long wagon included).
+      const half = Math.hypot(box.max.x - box.min.x, box.max.z - box.min.z) / 2;
+      if (Number.isFinite(half)) footprint = Math.max(footprint, half * 0.85);
     }
 
     // Newly bought things arrive rather than appear.
