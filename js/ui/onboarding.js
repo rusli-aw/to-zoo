@@ -1,183 +1,289 @@
 /**
- * To-Zoo — first run.
+ * To-Zoo — first run, as a tour of the real zoo.
  *
- * Four screens, and the fourth one hands over rather than congratulating
- * itself. The whole thing is skippable from the first screen, because a
- * person who already understands "animal = task" should not have to click
- * through an explanation of it.
+ * The old version explained the app with drawings on cards. This one explains
+ * it with the thing itself: three animals walk into your actual enclosure,
+ * one of them goes home and pays you for it, and one of them gives up waiting
+ * while you watch. Nothing here is a mock-up — it is the same scene, the same
+ * animals and the same animations the app uses in earnest.
+ *
+ * It never touches your task list. The animals are built directly and thrown
+ * away at the end, and any real animals you already have are hidden for the
+ * duration so the stage is clear.
  */
 
-import { ANIMAL_ORDER, ANIMALS } from '../model.js';
+import * as THREE from 'three';
+import { createAnimal } from '../zoo/animals.js';
+import { LAYOUT } from '../zoo/environment.js';
+import { flyTokens } from './toast.js';
+import { reduced } from './motion.js';
 
-const SCREENS = [
+/**
+ * Where the three demonstration animals stand, left to right. Set well back
+ * from the camera: the panel occupies the bottom of the screen, and anything
+ * nearer than this stands behind it.
+ */
+const SPOTS = {
+  elephant: new THREE.Vector3(-3.4, 0, -2.6),
+  lion: new THREE.Vector3(0, 0, -2.1),
+  rabbit: new THREE.Vector3(2.9, 0, -2.4),
+};
+
+const STEPS = [
   {
     key: 'welcome',
     title: 'Welcome to To-Zoo.',
-    body: 'To-Zoo is an animal rescue. A sanctuary where every animal is looked '
-        + 'after until it is ready to go home — and each one of them is a task '
-        + 'of yours.',
-    art: 'gate',
+    body: 'An animal rescue for your to-do list. Every task you take on becomes '
+        + 'an animal in your care, and finishing it sends one home.',
   },
   {
-    key: 'animals',
+    key: 'sizes',
     title: 'Three sizes of animal.',
-    body: 'Pick the one that matches the weight of the task. To-Zoo will guess for you as you type.',
-    art: 'animals',
+    body: 'An <b>elephant</b> is the big one you keep avoiding — the elephant in '
+        + 'the room. A <b>lion</b> is solid, middling work. A <b>rabbit</b> is a quick win. '
+        + 'Type the task and To-Zoo picks for you.',
   },
   {
     key: 'release',
     title: 'Finish a task. Send one home.',
-    body: 'Completing a task walks its animal out of the gate and back to the '
-        + 'wild, and pays you for looking after it.',
-    art: 'release',
+    body: 'The gate opens, the animal walks back into the wild, and you are paid '
+        + 'for looking after it. Tokens buy decorations, accessories and whole seasons.',
   },
   {
-    key: 'thrive',
-    title: 'Look after them while they wait.',
-    body: 'A full sanctuary is a good sanctuary. What matters is that nobody '
-        + 'waits too long — a forgotten animal gets restless, and costs you to keep.',
-    art: 'thrive',
+    key: 'neglect',
+    title: 'Leave one too long and it gives up.',
+    body: 'Moods drain on their own. Restless, then miserable, and eventually it '
+        + 'lies down and waits. It never dies and it never tells you off — the '
+        + 'moment you do the task, it is completely fine again.',
+  },
+  {
+    key: 'why',
+    title: 'Built for people who bounce off to-do lists.',
+    body: 'Students, and anyone whose attention does not run on streaks and guilt. '
+        + 'There is no streak to break and nothing punishes a long list — a full '
+        + 'zoo is just a busy week. Only neglect shows.',
   },
 ];
 
 /**
- * @param {{ onFinish: (result: {demo: boolean}) => void }} handlers
+ * @param {object} opts
+ * @param {import('../zoo/scene.js').ZooScene} opts.zoo
+ * @param {any} [opts.environment]   for opening the gate during the release
+ * @param {any} [opts.population]    real animals, hidden while the tour runs
+ * @param {(result: {demo: boolean}) => void} opts.onFinish
  */
-export function runOnboarding(handlers) {
+export function runOnboarding({ zoo, environment, population, onFinish }) {
   let index = 0;
+  let disposed = false;
+
+  /* --------------------------------------------------------- the stage -- */
+
+  // Real animals step aside so the demonstration has the enclosure to itself.
+  const hidden = [];
+  for (const entry of population?.all?.() ?? []) {
+    if (entry.animal?.root?.visible) {
+      entry.animal.root.visible = false;
+      hidden.push(entry.animal.root);
+    }
+  }
+
+  /** @type {Record<string, any>} */
+  const cast = {};
+  const stopFrames = [];
+
+  function summon(type) {
+    if (cast[type]) return cast[type];
+    const animal = createAnimal(zoo.ink, type, `tour-${type}`);
+    animal.root.position.copy(SPOTS[type]);
+    animal.root.visible = false;
+    zoo.scene.add(animal.root);
+    stopFrames.push(zoo.onFrame((dt, elapsed) => animal.update(dt, elapsed)));
+    cast[type] = animal;
+    return animal;
+  }
+
+  /** Fade a newcomer in rather than popping it into existence. */
+  function arrive(animal, delay = 0) {
+    animal.root.visible = true;
+    if (reduced()) return;
+    const base = animal.spec.scale;
+    animal.root.scale.setScalar(base * 0.01);
+    const started = performance.now() + delay;
+    const stop = zoo.onFrame(() => {
+      const t = Math.min(1, Math.max(0, (performance.now() - started) / 420));
+      // A little overshoot, so it lands instead of inflating.
+      const eased = t < 1 ? 1 + 2.7 * (t - 1) ** 3 + 1.7 * (t - 1) ** 2 : 1;
+      animal.root.scale.setScalar(base * Math.max(0.01, eased));
+      if (t >= 1) stop();
+    });
+    stopFrames.push(stop);
+  }
+
+  /**
+   * Camera. zoo.fly() rather than zoo.focusOn(): the scene keeps a camera
+   * "director" after the opening shot, and while one is set the focus rig is
+   * bypassed entirely — focusOn() silently does nothing. fly() is the right
+   * tool anyway, since it eases in and out instead of chasing.
+   */
+  const shot = (cam, look, seconds = 1.6) => zoo.fly([cam], [look], reduced() ? 0 : seconds);
+  const home = (seconds = 1.5) => zoo.flyHome(reduced() ? 0 : seconds);
+
+  /* ---------------------------------------------------------- the beats -- */
+
+  const BEATS = {
+    welcome() {
+      home();
+    },
+
+    sizes() {
+      const order = ['elephant', 'lion', 'rabbit'];
+      order.forEach((type, i) => {
+        const animal = summon(type);
+        animal.setAttention(1);
+        setTimeout(() => !disposed && arrive(animal), i * 260);
+      });
+      // Down among them, so the size difference is the whole shot.
+      shot(new THREE.Vector3(0, 2.7, 3.4), new THREE.Vector3(0, 0.9, -2.3), 1.8);
+    },
+
+    release() {
+      const animal = summon('rabbit');
+      animal.root.visible = true;
+      environment?.openGate(1);
+
+      // The same walk the real release plays: out through the gate, shrinking
+      // into the distance, then gone.
+      const from = animal.root.position.clone();
+      const gate = new THREE.Vector3(LAYOUT.gate.x, 0, LAYOUT.gate.z);
+      const away = LAYOUT.wildTarget.clone();
+      const base = animal.spec.scale;
+      const t0 = performance.now() + 420;
+      animal.setWalking(1);
+
+      const stop = zoo.onFrame(() => {
+        const t = Math.min(1, Math.max(0, (performance.now() - t0) / 3200));
+        // Gate first, wild second, so it uses the doorway like an animal would.
+        const leg = t < 0.45 ? t / 0.45 : (t - 0.45) / 0.55;
+        const a = t < 0.45 ? from : gate;
+        const b = t < 0.45 ? gate : away;
+        animal.root.position.lerpVectors(a, b, leg);
+        animal.root.lookAt(b.x, animal.root.position.y, b.z);
+        animal.root.scale.setScalar(base * (1 - 0.45 * t));
+
+        if (t > 0.42 && !animal.root.userData.paid) {
+          animal.root.userData.paid = true;
+          const screen = zoo.screenPosition(animal.anchor());
+          if (screen?.visible) flyTokens(screen, 8);
+        }
+        if (t >= 1) {
+          animal.root.visible = false;
+          animal.setWalking(0);
+          environment?.openGate(0);
+          stop();
+        }
+      });
+      stopFrames.push(stop);
+      // Wide and slightly off-axis: the point of this beat is the whole walk
+      // from the enclosure, through the gate, into the distance.
+      shot(new THREE.Vector3(1.8, 3.6, 8.6), new THREE.Vector3(0, 0.8, -4.5), 1.4);
+    },
+
+    neglect() {
+      const animal = summon('elephant');
+      animal.root.visible = true;
+      animal.setAttention(0);
+      // Anxious first, then it stops standing up altogether.
+      animal.setUrgency(1);
+      setTimeout(() => !disposed && animal.setPose('lie'), reduced() ? 0 : 900);
+      shot(
+        new THREE.Vector3(SPOTS.elephant.x + 2.3, 1.9, SPOTS.elephant.z + 3.9),
+        SPOTS.elephant.clone().setY(0.75),
+        1.8,
+      );
+    },
+
+    why() {
+      // Back on its feet, which is the point being made.
+      cast.elephant?.setPose('stand');
+      cast.elephant?.setUrgency(0.15);
+      home();
+    },
+  };
+
+  /* ------------------------------------------------------------- panel -- */
 
   const wrap = document.createElement('div');
-  wrap.className = 'onboarding';
+  wrap.className = 'tour';
   wrap.innerHTML = `
-    <div class="onboarding__panel" role="dialog" aria-modal="true"
-         aria-labelledby="ob-title">
-      <div class="onboarding__art" data-art></div>
-      <h2 class="onboarding__title" id="ob-title" tabindex="-1"></h2>
-      <p class="onboarding__body"></p>
-      <div class="onboarding__dots" role="tablist" aria-label="Progress"></div>
-      <div class="onboarding__actions">
-        <button class="btn btn--quiet" type="button" data-skip>Skip</button>
-        <button class="btn btn--primary" type="button" data-next>Next</button>
+    <div class="tour__panel" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+      <h2 class="tour__title" id="tour-title" tabindex="-1"></h2>
+      <p class="tour__body"></p>
+      <div class="tour__foot">
+        <div class="tour__dots" role="tablist" aria-label="Progress"></div>
+        <div class="tour__actions">
+          <button class="btn btn--quiet btn--sm" type="button" data-skip>Skip</button>
+          <button class="btn btn--primary btn--sm" type="button" data-next>Next</button>
+        </div>
       </div>
     </div>`;
 
   document.getElementById('modal-root').appendChild(wrap);
-  document.body.dataset.modal = 'open';
+  document.body.dataset.tour = 'open';
 
-  const titleEl = wrap.querySelector('.onboarding__title');
-  const bodyEl = wrap.querySelector('.onboarding__body');
-  const artEl = wrap.querySelector('[data-art]');
-  const dotsEl = wrap.querySelector('.onboarding__dots');
+  const titleEl = wrap.querySelector('.tour__title');
+  const bodyEl = wrap.querySelector('.tour__body');
+  const dotsEl = wrap.querySelector('.tour__dots');
   const nextButton = wrap.querySelector('[data-next]');
   const skipButton = wrap.querySelector('[data-skip]');
 
+  dotsEl.innerHTML = STEPS.map((s, i) => `
+    <span class="tour__dot" role="tab" aria-label="Step ${i + 1} of ${STEPS.length}"
+          data-dot="${i}"></span>`).join('');
+
   function paint() {
-    const screen = SCREENS[index];
-    titleEl.textContent = screen.title;
-    bodyEl.textContent = screen.body;
-    artEl.dataset.art = screen.art;
-    artEl.innerHTML = ART[screen.art];
-
-    dotsEl.innerHTML = SCREENS.map((s, i) => `
-      <span class="dot${i === index ? ' is-on' : ''}"
-            role="tab" aria-selected="${i === index}"
-            aria-label="Step ${i + 1} of ${SCREENS.length}"></span>`).join('');
-
-    const last = index === SCREENS.length - 1;
+    const step = STEPS[index];
+    const last = index === STEPS.length - 1;
+    titleEl.textContent = step.title;
+    bodyEl.innerHTML = step.body;
+    for (const dot of dotsEl.children) {
+      dot.classList.toggle('is-on', Number(dot.dataset.dot) === index);
+    }
     nextButton.textContent = last ? 'Add my first task' : 'Next';
     skipButton.textContent = last ? 'Start with a demo zoo' : 'Skip';
-
-    // Announce the new screen to a screen reader without stealing the button.
-    titleEl.focus();
+    wrap.dataset.step = step.key;
+    BEATS[step.key]?.();
+    titleEl.focus({ preventScroll: true });
   }
 
   function finish(demo) {
-    document.removeEventListener('keydown', onKey, true);
-    delete document.body.dataset.modal;
-    wrap.dataset.leaving = '';
-    setTimeout(() => wrap.remove(), 260);
-    handlers.onFinish({ demo });
+    if (disposed) return;
+    disposed = true;
+    for (const stop of stopFrames) stop();
+    for (const animal of Object.values(cast)) {
+      zoo.scene.remove(animal.root);
+      animal.dispose();
+    }
+    for (const root of hidden) root.visible = true;
+    environment?.openGate(0);
+    home(0.9);
+    wrap.remove();
+    delete document.body.dataset.tour;
+    document.removeEventListener('keydown', onKey);
+    onFinish({ demo });
   }
 
   function onKey(event) {
-    if (event.key === 'Escape') { event.stopPropagation(); finish(false); }
-    if (event.key === 'ArrowRight') nextButton.click();
-    if (event.key === 'ArrowLeft' && index > 0) { index -= 1; paint(); }
+    if (event.key === 'Escape') { event.preventDefault(); finish(false); }
+    if (event.key === 'Enter' && document.activeElement === titleEl) nextButton.click();
   }
 
   nextButton.addEventListener('click', () => {
-    if (index < SCREENS.length - 1) {
-      index += 1;
-      paint();
-      return;
-    }
-    finish(false);
+    if (index === STEPS.length - 1) { finish(false); return; }
+    index += 1;
+    paint();
   });
+  skipButton.addEventListener('click', () => finish(index === STEPS.length - 1));
+  document.addEventListener('keydown', onKey);
 
-  skipButton.addEventListener('click', () => finish(index === SCREENS.length - 1));
-
-  document.addEventListener('keydown', onKey, true);
   paint();
 }
-
-/* ------------------------------------------------------------------ art -- */
-
-/* Hand-drawn, in the same wobbling-line spirit as the world itself. Inline
-   SVG rather than 3D: the zoo behind is already doing that job, and these
-   need to be legible at 120px. */
-const ART = {
-  gate: `
-    <svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="3"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M12 100c30-6 60-8 88-8s58 2 88 8"/>
-      <path d="M56 100V40M144 100V40"/>
-      <path d="M48 40c8-4 16-4 16-4M136 36s8 0 16 4"/>
-      <path d="M50 30h100"/>
-      <path d="M70 100V56h26v44M104 100V56h26v44"/>
-      <path d="M20 78c6-10 14-12 20-4M160 74c6-10 14-10 18-2"/>
-    </svg>`,
-
-  animals: `
-    <svg viewBox="0 0 220 110" fill="none" stroke="currentColor" stroke-width="2.8"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <g>
-        <path d="M14 84c0-22 14-34 34-34s32 12 32 30c0 8-2 12-6 14"/>
-        <path d="M14 84c0 10 4 14 12 16 12 3 34 3 44-2"/>
-        <path d="M22 60c-6-5-12-3-12 3s4 9 9 10"/>
-        <path d="M18 88c-3 4-4 10-2 14M66 92c3 2 6 1 8-2"/>
-      </g>
-      <g>
-        <circle cx="126" cy="62" r="17"/>
-        <path d="M126 45c-11 0-19 8-19 17s8 17 19 17 19-8 19-17-8-17-19-17z"/>
-        <path d="M112 96c0-8 6-12 14-12s14 4 14 12"/>
-        <path d="M120 60h1M132 60h1"/>
-      </g>
-      <g>
-        <path d="M176 82c-8 0-14-5-14-12s6-12 14-12c2-6 8-8 12-4 5-4 12 0 12 6 5 1 8 5 8 10 0 7-6 12-14 12z"/>
-        <path d="M172 82v10M196 82v10"/>
-        <path d="M186 70h1M192 70h1"/>
-      </g>
-    </svg>`,
-
-  release: `
-    <svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="3"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M10 96h60M130 96h60"/>
-      <path d="M62 96V44M138 96V44"/>
-      <path d="M62 44c-10 6-14 14-14 22M138 44c10 6 14 14 14 22"/>
-      <path d="M86 88c0-14 9-22 22-22s20 8 20 20"/>
-      <path d="M86 88c0 6 3 8 8 9 8 2 22 2 28-1"/>
-      <path d="M92 74c-4-3-8-2-8 2s3 6 6 6"/>
-      <path d="M150 30c4-6 10-6 14 0M164 44c5-4 11-2 13 4M172 22c3-4 8-3 10 2"/>
-    </svg>`,
-
-  thrive: `
-    <svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="3"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M8 98c30-8 62-10 92-10s62 2 92 10"/>
-      <path d="M44 88c0-16 6-26 6-26s6 10 6 26"/>
-      <path d="M30 74c8-14 20-16 26-6M76 70c-8-12-18-14-24-4"/>
-      <path d="M132 88V58M132 58c-10 0-16-6-16-14 0-6 6-10 12-8 2-8 10-10 14-4 6-2 12 4 10 10 6 2 8 10 2 14-4 4-14 4-22 2z"/>
-      <path d="M100 96c2-6 6-8 10-6M160 92c3-6 8-7 12-4"/>
-    </svg>`,
-};

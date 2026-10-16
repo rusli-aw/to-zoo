@@ -1648,3 +1648,73 @@ textarea.field__input { border-radius: var(--radius-sm) !important; resize: vert
   .zoo-card { flex-wrap: wrap; }
   .zoo-card__actions { width: 100%; justify-content: flex-end; }
 }
+
+/* ═══════════════════════════════════════════════════ tour ══
+   The first-run tour explains the app by driving the real zoo,
+   so the panel sits at the bottom and leaves the scene visible.
+   No scrim: the thing being described is behind it. */
+
+.tour {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 70;
+  display: grid;
+  justify-items: center;
+  padding: var(--sp-4) var(--sp-4) max(var(--sp-5), env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+.tour__panel {
+  pointer-events: auto;
+  width: min(94vw, 520px);
+  padding: var(--sp-5);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-lg);
+  animation: tour-rise var(--dur) var(--ease-out) both;
+}
+
+@keyframes tour-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .tour__panel { animation: none; } }
+
+.tour__title {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+}
+.tour__title:focus-visible { outline: none; }
+.tour__body { margin: 0; color: var(--ink-muted); }
+.tour__body b { color: var(--ink); font-weight: 600; }
+
+.tour__foot {
+  margin-top: var(--sp-4);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.tour__dots { display: flex; gap: 6px; margin-right: auto; }
+.tour__dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition: width var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-soft);
+}
+.tour__dot.is-on { width: 18px; border-radius: var(--radius-pill); background: var(--accent); }
+.tour__actions { display: flex; gap: var(--sp-2); }
+
+/* While the tour runs, the HUD would only compete with it. */
+body[data-tour="open"] :is(.hud--bl, .hud--br, .nav) {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease-soft);
+}
+
+@media (max-width: 560px) {
+  .tour__foot { flex-wrap: wrap; }
+  .tour__actions { width: 100%; }
+  .tour__actions .btn { flex: 1; }
+}

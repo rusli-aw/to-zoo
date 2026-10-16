@@ -572,6 +572,9 @@ async function boot() {
    */
   function startTutorial() {
     runOnboarding({
+      zoo,
+      environment,
+      population,
       onFinish({ demo }) {
         finishOnboarding();
         if (demo) loadDemo();
