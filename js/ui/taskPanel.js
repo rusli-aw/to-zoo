@@ -9,7 +9,7 @@
  */
 
 import {
-  ANIMALS, ageDays, dailyUpkeep, dueLabel, isOverdue, mood, moodOf, moodQuip,
+  ANIMALS, ageDays, dailyUpkeep, dueLabel, isOverdue, mood, moodOf,
   urgencyBand, waitingLabel,
 } from '../model.js';
 import { deleteTask } from '../store.js';
@@ -59,7 +59,6 @@ export function openTaskPanel(task, handlers) {
                aria-label="Mood ${moodValue} percent, ${stage.label}">
             <i style="width:${moodValue}%"></i>
           </div>
-          <p class="mood__quip">“${escapeHtml(moodQuip(task))}”</p>
         </div>
 
         <dl class="meta">
