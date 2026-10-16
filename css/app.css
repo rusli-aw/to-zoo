@@ -732,3 +732,20 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
    or a popup. */
 .app[data-sheet="open"] .empty,
 body[data-modal="open"] .empty { display: none; }
+
+/* ── solid white panels (the liquid glass is retired) ── */
+:is(.sheet, .health, .nav, .group-chip, .sound-btn, .today, .piggy, .avatar-btn,
+    .hover-card, .mood-bar, .modal--centre .modal__panel, .modal--sheet .modal__panel, .toast) {
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 1px 2px rgba(87, 61, 33, .06), 0 8px 24px rgba(87, 61, 33, .12);
+  border-color: rgba(124, 102, 77, .18);
+}
+.sheet__head { border-bottom-color: rgba(124, 102, 77, .14); }
+:is(.stat, .card, .shop-card, .season, .badge, .me-card, .friend-card, .group-zoo, .animal-card, .field__input,
+    .search__input, .select select, .chip, .segmented, .btn--quiet) {
+  background-color: #faf6f0;
+}
+.modal--add .animal-card.is-on, .season.is-on, .chip.is-on { background-color: var(--action); }
+.nav__item.is-active { background: var(--action); }

@@ -374,6 +374,8 @@ export function createGlass(zoo) {
   /** Collect the panes on screen this frame, in buffer pixels. */
   function collect(canvasRect, scale, bufferH) {
     let n = 0;
+    // Panels are solid white now; the pass only paints the world.
+    if (!document.documentElement.classList.contains('glass-on')) return 0;
     for (const el of document.querySelectorAll(SELECTOR)) {
       if (n >= MAX) break;
       const cs = getComputedStyle(el);

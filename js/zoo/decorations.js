@@ -350,13 +350,17 @@ export function buildDecorations(zoo, space = null) {
     return list[index % list.length];
   }
 
+  /** Saved positions from the store, itemId -> {x, z}. 0,0 means "not placed by hand". */
+  let saved = new Map();
+
   function add(item) {
     const builder = BUILDERS[item.build];
     if (!builder) return;
     const spec = builder();
 
     const root = new THREE.Group();
-    const spot = spotFor(item);
+    const at = saved.get(item.id);
+    const spot = at && (at.x || at.z) ? at : spotFor(item);
     root.position.set(spot.x, 0, spot.z);
     root.rotation.y = rng(item.id.length * 977)() * Math.PI * 2;
 
@@ -403,7 +407,8 @@ export function buildDecorations(zoo, space = null) {
         x: spot.x, z: spot.z, r: footprint, mobile: false,
       });
     }
-    placed.set(item.id, { root, sway: spec.sway ?? 0, flock, grow: reduced() ? 1 : 0 });
+    for (const o of root.children) o.traverse((m) => { m.userData.decoId = item.id; });
+    placed.set(item.id, { root, sway: spec.sway ?? 0, flock, grow: reduced() ? 1 : 0, footprint });
   }
 
   function remove(itemId) {
@@ -437,13 +442,106 @@ export function buildDecorations(zoo, space = null) {
     }
   });
 
+  /* ------------------------------------------------------------ drag --- */
+
+  /**
+   * Every prop can be picked up and moved anywhere inside the fence. Press on
+   * it, drag across the lawn (it lifts a little while carried), let go to set
+   * it down. The fence keeps it in; its footprint moves with it, so the
+   * animals re-route round its new spot.
+   */
+  let dragging = null;
+  let justDragged = false;
+  let onMoved = null;
+  const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const ray = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const hitPoint = new THREE.Vector3();
+  const canvas = zoo.canvas;
+  canvas.style.touchAction = 'none';
+
+  function groundAt(e) {
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, zoo.camera);
+    return ray.ray.intersectPlane(ground, hitPoint);
+  }
+  function propAt(e) {
+    const roots = [...placed.values()].map((p) => p.root);
+    const hit = zoo.raycast(e.clientX, e.clientY, roots).find((h) => h.object.userData.decoId);
+    return hit ? hit.object.userData.decoId : null;
+  }
+  const clampIn = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  canvas.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || document.body.dataset.modal === 'open') return;
+    if (document.getElementById('app')?.dataset.sheet === 'open') return;
+    const id = propAt(e);
+    if (!id) return;
+    const entry = placed.get(id);
+    const p = groundAt(e);
+    if (!entry || !p) return;
+    dragging = { id, entry, dx: entry.root.position.x - p.x, dz: entry.root.position.z - p.z, moved: false, pointer: e.pointerId };
+    canvas.setPointerCapture(e.pointerId);
+    canvas.style.cursor = 'grabbing';
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (!dragging) {
+      if (e.pointerType === 'mouse') canvas.style.cursor = propAt(e) ? 'grab' : '';
+      return;
+    }
+    const p = groundAt(e);
+    if (!p) return;
+    const { entry } = dragging;
+    const m = Math.max(0.6, (entry.footprint || 0.5) * 0.7);
+    const x = clampIn(p.x + dragging.dx, LAYOUT.minX + m, LAYOUT.maxX - m);
+    const z = clampIn(p.z + dragging.dz, LAYOUT.minZ + m, LAYOUT.maxZ - m);
+    if (Math.hypot(x - entry.root.position.x, z - entry.root.position.z) > 0.02) dragging.moved = true;
+    entry.root.position.set(x, 0.18, z);   // carried: lifted off the grass
+    space?.move(`deco_${dragging.id}`, x, z);
+  });
+
+  function drop() {
+    if (!dragging) return;
+    const { id, entry, moved } = dragging;
+    entry.root.position.y = 0;
+    canvas.style.cursor = '';
+    dragging = null;
+    if (moved) {
+      justDragged = true;
+      setTimeout(() => { justDragged = false; }, 0);
+      onMoved?.(id, entry.root.position.x, entry.root.position.z);
+    }
+  }
+  canvas.addEventListener('pointerup', drop);
+  canvas.addEventListener('pointercancel', drop);
+  // A drag must not also count as a click on an animal underneath.
+  canvas.addEventListener('click', (e) => { if (justDragged) e.stopImmediatePropagation(); }, true);
+
   return {
     group,
+
+    /** Called with (itemId, x, z) when a prop is set down somewhere new. */
+    onMoved(fn) { onMoved = fn; },
+
+    /** True while a prop is being carried. */
+    get dragging() { return Boolean(dragging); },
 
     /**
      * @param {ReturnType<import('../store.js').shopItems>} items
      */
-    sync(items) {
+    sync(items, placements = []) {
+      saved = new Map(placements.map((p) => [p.itemId, { x: p.x, z: p.z }]));
+      // Moved somewhere else (another tab, an undo): follow it.
+      for (const [id, entry] of placed) {
+        const at = saved.get(id);
+        if (at && (at.x || at.z) && entry !== dragging?.entry
+          && (Math.abs(entry.root.position.x - at.x) > 0.01 || Math.abs(entry.root.position.z - at.z) > 0.01)) {
+          entry.root.position.set(at.x, 0, at.z);
+          space?.move(`deco_${id}`, at.x, at.z);
+        }
+      }
       const wanted = new Set(
         items.filter((i) => i.owned && i.placedCount > 0 && BUILDERS[i.build]).map((i) => i.id),
       );

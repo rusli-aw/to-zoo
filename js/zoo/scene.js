@@ -125,7 +125,6 @@ export class ZooScene {
     this.glass = null;
     try {
       this.glass = createGlass(this);
-      document.documentElement.classList.add('glass-on');
     } catch (err) {
       console.warn('[to-zoo] liquid glass unavailable, using CSS frost', err);
     }

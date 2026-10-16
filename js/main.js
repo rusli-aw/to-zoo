@@ -31,7 +31,7 @@ import { refresh as refreshPalette } from './zoo/palette.js';
 import {
   getState, subscribe, onError, mood as zooMoodOf, setSetting,
   taskById, completeTask, uncompleteTask, setUser, finishOnboarding, loadDemo,
-  shopItems, settleUpkeep, placedItems, updateTask,
+  shopItems, settleUpkeep, placedItems, updateTask, moveItem,
 } from './store.js';
 import { ANIMALS, mood as moodOfTask } from './model.js';
 
@@ -137,6 +137,11 @@ async function boot() {
   const fence = buildFence(zoo);
   const clutter = buildClutter(zoo);
   const decorations = buildDecorations(zoo, space);
+  // Set a prop down somewhere new: remember it, and let the animals re-route.
+  decorations.onMoved((itemId, x, z) => {
+    const spot = getState().placements.filter((p) => p.itemId === itemId).at(-1);
+    if (spot) moveItem(spot.uid, x, z);
+  });
   // The sun runs on the real clock and owns sky, fog and every light from
   // here on; scene.applyTheme() steps aside for it.
   // Seasons own everything past the fence, so they are built before the
@@ -241,8 +246,8 @@ async function boot() {
     grass.setVisible(!['summer', 'winter'].includes(seasons.season));
 
     const items = shopItems(state);
-    const placedKey = state.placements.map((p) => p.itemId).join(',');
-    decorations.sync(items);
+    const placedKey = state.placements.map((p) => `${p.itemId}@${p.x.toFixed(1)},${p.z.toFixed(1)}`).join(",");
+    decorations.sync(items, state.placements);
     if (placedKey !== lastPlacedKey) {
       lastPlacedKey = placedKey;
       population.replan();
