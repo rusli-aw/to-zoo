@@ -176,7 +176,7 @@ const compositeFragment = /* glsl */ `
     // Soft steps: each band edge is a short ramp, wobbled by large-scale
     // paper noise so the boundaries meander like a wet brush edge.
     float steps = 5.0;
-    float x = lum * steps + (vnoise(frag * 0.012) - 0.5) * 0.5;
+    float x = lum * steps;
     float lq = (floor(x) + smoothstep(0.35, 0.65, fract(x))) / steps;
     srgb *= mix(1.0, lq / max(lum, 0.02), 0.5 * uPaint);
 
@@ -267,7 +267,7 @@ const compositeFragment = /* glsl */ `
     if (uGrain > 0.0) {
       vec2 q = frag / uScale;
       float tooth = hash(floor(q)) - 0.5;
-      float blotch = vnoise(q * 0.012) * 0.6 + vnoise(q * 0.045) * 0.4 - 0.5;
+      float blotch = 0.0;
       vec3 srgb = toSRGB(col);
       srgb *= 1.0 + tooth * 0.05 * uGrain + blotch * 0.07 * uGrain;
       srgb = mix(srgb, srgb * vec3(1.02, 0.99, 0.95), 0.5 * uGrain);   // warm stock

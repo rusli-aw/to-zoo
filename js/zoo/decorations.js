@@ -362,7 +362,8 @@ export function buildDecorations(zoo, space = null) {
     const at = saved.get(item.id);
     const spot = at && (at.x || at.z) ? at : spotFor(item);
     root.position.set(spot.x, 0, spot.z);
-    root.rotation.y = rng(item.id.length * 977)() * Math.PI * 2;
+    root.rotation.y = at && (at.x || at.z) && Number.isFinite(at.rot) && at.rot !== 0
+      ? at.rot : rng(item.id.length * 977)() * Math.PI * 2;
 
     if (spec.parts) {
       for (const part of spec.parts) {
@@ -414,6 +415,7 @@ export function buildDecorations(zoo, space = null) {
   function remove(itemId) {
     const entry = placed.get(itemId);
     if (!entry) return;
+    if (selected === itemId) select(null);
     space?.remove(`deco_${itemId}`);
     entry.root.removeFromParent();
     entry.root.traverse((o) => {
@@ -473,20 +475,25 @@ export function buildDecorations(zoo, space = null) {
   }
   const clampIn = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
+  function startDrag(id, e, target) {
+    const entry = placed.get(id);
+    const p = groundAt(e);
+    if (!entry || !p) return;
+    dragging = { id, entry, dx: entry.root.position.x - p.x, dz: entry.root.position.z - p.z, moved: false, target };
+    target.setPointerCapture(e.pointerId);
+    canvas.style.cursor = 'grabbing';
+    select(id);
+  }
+
   canvas.addEventListener('pointerdown', (e) => {
     if (e.button !== 0 || document.body.dataset.modal === 'open') return;
     if (document.getElementById('app')?.dataset.sheet === 'open') return;
     const id = propAt(e);
-    if (!id) return;
-    const entry = placed.get(id);
-    const p = groundAt(e);
-    if (!entry || !p) return;
-    dragging = { id, entry, dx: entry.root.position.x - p.x, dz: entry.root.position.z - p.z, moved: false, pointer: e.pointerId };
-    canvas.setPointerCapture(e.pointerId);
-    canvas.style.cursor = 'grabbing';
+    if (!id) { select(null); return; }
+    startDrag(id, e, canvas);
   });
 
-  canvas.addEventListener('pointermove', (e) => {
+  function onDragMove(e) {
     if (!dragging) {
       if (e.pointerType === 'mouse') canvas.style.cursor = propAt(e) ? 'grab' : '';
       return;
@@ -500,7 +507,8 @@ export function buildDecorations(zoo, space = null) {
     if (Math.hypot(x - entry.root.position.x, z - entry.root.position.z) > 0.02) dragging.moved = true;
     entry.root.position.set(x, 0.18, z);   // carried: lifted off the grass
     space?.move(`deco_${dragging.id}`, x, z);
-  });
+  }
+  canvas.addEventListener('pointermove', onDragMove);
 
   function drop() {
     if (!dragging) return;
@@ -511,11 +519,69 @@ export function buildDecorations(zoo, space = null) {
     if (moved) {
       justDragged = true;
       setTimeout(() => { justDragged = false; }, 0);
-      onMoved?.(id, entry.root.position.x, entry.root.position.z);
+      onMoved?.(id, entry.root.position.x, entry.root.position.z, entry.root.rotation.y);
     }
   }
   canvas.addEventListener('pointerup', drop);
   canvas.addEventListener('pointercancel', drop);
+
+  /* ── the little toolbar over a selected prop: move handle and rotate ── */
+  const tools = document.createElement('div');
+  tools.className = 'prop-tools';
+  tools.hidden = true;
+  tools.innerHTML = `
+    <button type="button" class="prop-tools__btn prop-tools__move" aria-label="Drag to move" title="Drag to move">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg>
+    </button>
+    <button type="button" class="prop-tools__btn prop-tools__rotate" aria-label="Rotate" title="Rotate">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+    </button>`;
+  (document.getElementById('stage') ?? document.body).appendChild(tools);
+  let selected = null;
+  const anchor = new THREE.Vector3();
+  const screen = { x: 0, y: 0, visible: true };
+
+  function select(id) {
+    selected = id && placed.has(id) ? id : null;
+    tools.hidden = !selected;
+  }
+
+  const moveBtn = tools.querySelector('.prop-tools__move');
+  moveBtn.addEventListener('pointerdown', (e) => {
+    if (!selected) return;
+    e.preventDefault();
+    startDrag(selected, e, moveBtn);
+  });
+  moveBtn.addEventListener('pointermove', onDragMove);
+  moveBtn.addEventListener('pointerup', drop);
+  moveBtn.addEventListener('pointercancel', drop);
+
+  tools.querySelector('.prop-tools__rotate').addEventListener('click', () => {
+    const entry = selected && placed.get(selected);
+    if (!entry) return;
+    entry.spin = (entry.spin ?? 0) + Math.PI / 4;   // eased in the frame loop
+    entry.spinTo = entry.root.rotation.y + Math.PI / 4;
+    onMoved?.(selected, entry.root.position.x, entry.root.position.z, entry.spinTo);
+  });
+
+  zoo.onFrame((dt) => {
+    for (const entry of placed.values()) {
+      if (entry.spinTo !== undefined) {
+        const d = entry.spinTo - entry.root.rotation.y;
+        entry.root.rotation.y += d * (1 - Math.exp(-12 * dt));
+        if (Math.abs(d) < 0.002) { entry.root.rotation.y = entry.spinTo; entry.spinTo = undefined; }
+      }
+    }
+    if (!selected) return;
+    const entry = placed.get(selected);
+    if (!entry) { select(null); return; }
+    const box = new THREE.Box3().setFromObject(entry.root);
+    anchor.set(entry.root.position.x, box.max.y + 0.3, entry.root.position.z);
+    zoo.screenPosition(anchor, screen);
+    const r = canvas.getBoundingClientRect();
+    tools.style.transform = `translate(-50%, -100%) translate(${screen.x - r.left}px, ${screen.y - r.top}px)`;
+    tools.style.visibility = screen.visible ? '' : 'hidden';
+  });
   // A drag must not also count as a click on an animal underneath.
   canvas.addEventListener('click', (e) => { if (justDragged) e.stopImmediatePropagation(); }, true);
 
@@ -532,7 +598,7 @@ export function buildDecorations(zoo, space = null) {
      * @param {ReturnType<import('../store.js').shopItems>} items
      */
     sync(items, placements = []) {
-      saved = new Map(placements.map((p) => [p.itemId, { x: p.x, z: p.z }]));
+      saved = new Map(placements.map((p) => [p.itemId, { x: p.x, z: p.z, rot: p.rot }]));
       // Moved somewhere else (another tab, an undo): follow it.
       for (const [id, entry] of placed) {
         const at = saved.get(id);

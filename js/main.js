@@ -138,9 +138,9 @@ async function boot() {
   const clutter = buildClutter(zoo);
   const decorations = buildDecorations(zoo, space);
   // Set a prop down somewhere new: remember it, and let the animals re-route.
-  decorations.onMoved((itemId, x, z) => {
+  decorations.onMoved((itemId, x, z, rot) => {
     const spot = getState().placements.filter((p) => p.itemId === itemId).at(-1);
-    if (spot) moveItem(spot.uid, x, z);
+    if (spot) moveItem(spot.uid, x, z, rot);
   });
   // The sun runs on the real clock and owns sky, fog and every light from
   // here on; scene.applyTheme() steps aside for it.

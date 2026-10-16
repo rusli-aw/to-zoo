@@ -12,7 +12,7 @@
 
 import * as THREE from 'three';
 import { color, mixTokens } from './palette.js';
-import { paintTexture, stoneTexture } from './textures.js';
+import { stoneTexture } from './textures.js';
 import { blob, box, cone, cyl, mergeGeometries, place, plane, rng } from './geom.js';
 
 /** Shared world layout. Anything that needs to know where the zoo ends asks here. */
@@ -76,11 +76,6 @@ export function buildEnvironment(zoo, space = null) {
   scene.add(group);
 
   // Pixel-crisp patterns, nearest-filtered: the retro handheld look.
-  // Gouache: soft blotches of tone on the meadow, like paint on paper.
-  const wildTex = paintTexture(1);
-  wildTex.repeat.set(16, 16);
-  const zooTex = paintTexture(2);
-  zooTex.repeat.set(2.5, 2);
   const stones = stoneTexture();
 
   /* ------------------------------------------------------------ sky ---- */
@@ -216,7 +211,7 @@ export function buildEnvironment(zoo, space = null) {
   // Sits well below the enclosure floor's lowest bump, so the two never
   // intersect (the crossing drew a stray ink line across the lawn).
   const wildGeo = plane(240, 240, { rot: [-Math.PI / 2, 0, 0], pos: [0, -0.25, -40] });
-  const wildMat = new THREE.MeshLambertMaterial({ color: color('grass-lush').clone(), map: wildTex });
+  const wildMat = new THREE.MeshLambertMaterial({ color: color('grass-lush').clone() });
   const wildGround = new THREE.Mesh(wildGeo, wildMat);
   wildGround.receiveShadow = quality.shadows;
   group.add(wildGround);
@@ -238,7 +233,8 @@ export function buildEnvironment(zoo, space = null) {
     }
     zooGeo.computeVertexNormals();
   }
-  const zooMat = new THREE.MeshLambertMaterial({ color: color('grass').clone(), map: zooTex });
+  // Plain, even grass: the painted blotch texture read as dark splatters.
+  const zooMat = new THREE.MeshLambertMaterial({ color: color('grass').clone() });
   const zooGround = new THREE.Mesh(zooGeo, zooMat);
   zooGround.receiveShadow = quality.shadows;
   group.add(zooGround);

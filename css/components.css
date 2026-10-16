@@ -1528,3 +1528,34 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 .modal--add .modal__head { padding-bottom: var(--sp-4); }
 .due-row .chip { font-size: var(--step--1); }
 @media (max-width: 560px) { .due-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ── prop toolbar: drag handle and rotate, floating over a selected prop ── */
+.prop-tools {
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(87, 61, 33, .1), 0 8px 20px rgba(87, 61, 33, .18);
+}
+.prop-tools[hidden] { display: none; }
+.prop-tools__btn {
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #faf6f0;
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: none;
+}
+.prop-tools__btn svg { width: 20px; height: 20px; }
+.prop-tools__btn:hover { background: var(--action); }
+.prop-tools__move { cursor: grab; }
+.prop-tools__move:active { cursor: grabbing; }
+
+/* Text boxes: gently rounded, not pills. */
+textarea.field__input { border-radius: var(--radius-sm) !important; resize: vertical; }
