@@ -727,3 +727,8 @@ h1, h2, h3, h4, .brand__name, .stat b, .share-card__name {
 .avatar-btn, .avatar-mark { border-radius: 50%; }
 .segmented { padding: 3px; }
 .btn--add { border-radius: var(--radius-pill); }
+
+/* The empty-zoo card belongs to the zoo view only: never on top of a panel
+   or a popup. */
+.app[data-sheet="open"] .empty,
+body[data-modal="open"] .empty { display: none; }
