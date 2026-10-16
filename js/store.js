@@ -74,6 +74,13 @@ function blank() {
     lastSeen: Date.now(),
     /** The group zoo you are in, {id, name}, or null for your own zoo. */
     group: null,
+    /**
+     * Every group zoo this person has created or joined, most recent first:
+     * `{id, name, lastOpened}`. The invite link is the only key a group zoo
+     * has, so without this list a zoo you joined last week is lost the moment
+     * you step back into your own. The Zoos view is a reader of this.
+     */
+    zoos: [],
     /** Your own tasks, parked while you are in a group zoo. */
     personalTasks: null,
   };
@@ -95,6 +102,15 @@ function migrate(parsed, base) {
     parsed.tasks = parsed.tasks.map((t) => (
       t?.animalType === 'sheep' ? { ...t, animalType: 'rabbit' } : t
     ));
+  }
+
+  // Saves written before the Zoos view have no list of group zoos. Seed it
+  // from the one they are standing in, which is the only one we can know
+  // about after the fact.
+  if (!Array.isArray(parsed.zoos)) {
+    parsed.zoos = parsed.group
+      ? [{ id: parsed.group.id, name: parsed.group.name, lastOpened: Date.now() }]
+      : [];
   }
 
   // Sound became on-by-default with the speaker button; turn it on once for
@@ -589,6 +605,26 @@ export function enterGroup(group, tasks = []) {
     personalTasks: s.group ? s.personalTasks : s.tasks,
     group: { id: group.id, name: group.name },
     tasks: tasks.map(makeTask),
+    // Remembered on the way in, so the Zoos view can offer it again later.
+    zoos: rememberIn(s.zoos, group),
+  }));
+}
+
+/** Most recently opened first, one entry per id, name kept fresh. */
+function rememberIn(list, group) {
+  const rest = (list ?? []).filter((z) => z.id !== group.id);
+  return [{ id: group.id, name: group.name, lastOpened: Date.now() }, ...rest];
+}
+
+/**
+ * Drop a group zoo from your list. The zoo itself is untouched — everyone
+ * else still has it, and the invite link still works if someone sends it
+ * again. This is only forgetting where you put the key.
+ */
+export function forgetZoo(id) {
+  commit({ type: 'group:forget', id }, (s) => ({
+    ...s,
+    zoos: (s.zoos ?? []).filter((z) => z.id !== id),
   }));
 }
 

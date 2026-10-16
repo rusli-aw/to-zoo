@@ -524,8 +524,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
     padding: var(--sp-2) var(--sp-2) max(var(--sp-2), env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--surface) 94%, transparent);
   }
-  .nav__item { flex-direction: column; gap: 2px; padding: var(--sp-2) var(--sp-3); }
-  .nav__label { display: block; font-size: 10px; }
+  /* Six tabs have to fit a 360px phone, so they share the width evenly and
+     the labels shrink rather than the last one falling off the edge. */
+  .nav__item { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 2px; padding: var(--sp-2) 4px; }
+  .nav__label {
+    display: block;
+    font-size: 10px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav__badge { position: absolute; top: 2px; right: 50%; transform: translateX(18px); }
 
   .hud--bl { left: var(--sp-3); bottom: calc(var(--nav-h) + var(--sp-4)); }
   .health { width: 158px; padding: var(--sp-2) var(--sp-3); }

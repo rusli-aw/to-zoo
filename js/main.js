@@ -501,7 +501,10 @@ async function boot() {
   const group = createGroupSync({
     onPeople(people) {
       renderGroupChip(people);
-      if (document.getElementById('app').dataset.view === 'friends') views.render();
+      // Presence lands outside the store, so an open sheet listing who is
+      // here has to be told about it.
+      const open = document.getElementById('app').dataset.view;
+      if (open === 'zoos' || open === 'friends') views.render();
     },
     onError(err) {
       toast({ title: 'Group zoo is offline', note: String(err?.message ?? err) });
@@ -517,7 +520,7 @@ async function boot() {
       <span class="group-chip__name">${g.name.replace(/[<>&]/g, '')}</span>`;
     groupChip.title = `${g.name}: ${people.length} here now`;
   }
-  groupChip?.addEventListener('click', () => views.show('friends'));
+  groupChip?.addEventListener('click', () => views.show('zoos'));
   renderGroupChip();
   subscribe((_, change) => { if (change.type.startsWith('group:')) renderGroupChip(); });
 

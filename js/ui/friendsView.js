@@ -9,6 +9,9 @@
  *
  * Friends are seeded mock data. Sharing is real: it encodes counts — never
  * task titles — into a link, so a shared zoo gives nothing away.
+ *
+ * Shared zoos themselves live in ui/zoosView.js. This view is about other
+ * people's zoos; that one is about yours.
  */
 
 import { doneTasks, getState, mood as zooMoodOf, readShareCode, shareCode } from '../store.js';
@@ -16,8 +19,6 @@ import { FRIENDS } from '../data/seed.js';
 import { toast } from './toast.js';
 import { openDialog } from './dialog.js';
 import { avatarMark, friendMark } from './icons.js';
-import { inviteLink, parseInvite } from '../group.js';
-import { ensureName } from './identity.js';
 
 export function renderFriendsView(root, ctx) {
   const state = getState();
@@ -36,8 +37,6 @@ export function renderFriendsView(root, ctx) {
   const friends = shared ? [shared, ...FRIENDS] : FRIENDS;
 
   root.innerHTML = `
-    ${groupSection(state, ctx.group)}
-
     <div class="me-card">
       <span class="me-card__avatar" aria-hidden="true">${avatarMark(me.name, me.avatar)}</span>
       <div class="me-card__body">
@@ -61,96 +60,7 @@ export function renderFriendsView(root, ctx) {
     </p>`;
 
   root.querySelector('[data-share]').addEventListener('click', () => openShare(me, ctx));
-  wireGroup(root, ctx);
 }
-
-/* ----------------------------------------------------------- group zoo -- */
-
-function groupSection(state, group) {
-  if (!group) return '';
-  const g = state.group;
-  if (!g) {
-    return `
-      <section class="group-zoo">
-        <h3 class="group-zoo__title">Group zoo</h3>
-        <p class="group-zoo__lede">One zoo for your flat, study group or team. Everyone adds tasks, and anyone can send an animal home.</p>
-        <div class="group-zoo__row">
-          <input class="field__input" type="text" placeholder="Name it, e.g. Flat 4" maxlength="40" data-group-name>
-          <button class="btn btn--primary" type="button" data-group-create>Start a group zoo</button>
-        </div>
-        <div class="group-zoo__row">
-          <input class="field__input" type="text" placeholder="Paste an invite link" data-group-link>
-          <button class="btn" type="button" data-group-join>Join</button>
-        </div>
-        ${group.cloud ? '' : '<p class="group-zoo__note">Local test mode: syncs between tabs of this browser until Supabase is connected.</p>'}
-      </section>`;
-  }
-  const people = group.people;
-  return `
-    <section class="group-zoo is-in">
-      <div class="group-zoo__head">
-        <div>
-          <p class="group-zoo__kicker">You're in a group zoo</p>
-          <h3 class="group-zoo__title">${escapeHtml(g.name)}</h3>
-        </div>
-        <button class="btn btn--sm" type="button" data-group-leave>Back to my zoo</button>
-      </div>
-      <div class="group-zoo__row">
-        <input class="field__input" type="text" readonly value="${escapeHtml(inviteLink(g.id))}" data-group-invite>
-        <button class="btn btn--primary" type="button" data-group-copy>Copy invite link</button>
-      </div>
-      <ul class="group-zoo__people" aria-label="Here now">
-        ${people.map((p) => `
-          <li class="group-zoo__person"><span class="group-zoo__avatar">${avatarMark(p.name, p.avatar)}</span>${escapeHtml(p.name || 'Someone')}</li>`).join('')}
-      </ul>
-      ${group.cloud ? '' : '<p class="group-zoo__note">Local test mode: open the invite link in another tab to see it sync.</p>'}
-    </section>`;
-}
-
-function wireGroup(root, ctx) {
-  const group = ctx.group;
-  if (!group) return;
-  const done = () => { ctx.syncWorld(); ctx.views.render(); };
-  const oops = (err) => toast({ title: 'Could not reach the group zoo', note: String(err?.message ?? err) });
-
-  root.querySelector('[data-group-create]')?.addEventListener('click', async () => {
-    if (!(await ensureName())) return;
-    const name = root.querySelector('[data-group-name]').value.trim() || 'Our zoo';
-    try {
-      const id = await group.create(name);
-      navigator.clipboard?.writeText(inviteLink(id)).catch(() => {});
-      toast({ title: `${name} is open`, note: 'Invite link copied. Send it to whoever should join.' });
-      done();
-    } catch (err) { oops(err); }
-  });
-
-  root.querySelector('[data-group-join]')?.addEventListener('click', async () => {
-    const id = parseInvite(root.querySelector('[data-group-link]').value);
-    if (!id) { toast({ title: 'That doesn\u2019t look like an invite link' }); return; }
-    if (!(await ensureName())) return;
-    try {
-      const zoo = await group.join(id);
-      if (!zoo) { toast({ title: 'No group zoo at that link' }); return; }
-      toast({ title: `Joined ${zoo.name}` });
-      done();
-    } catch (err) { oops(err); }
-  });
-
-  root.querySelector('[data-group-copy]')?.addEventListener('click', () => {
-    const input = root.querySelector('[data-group-invite]');
-    navigator.clipboard?.writeText(input.value).then(
-      () => toast({ title: 'Invite link copied' }),
-      () => { input.select(); },
-    );
-  });
-
-  root.querySelector('[data-group-leave]')?.addEventListener('click', () => {
-    group.leave();
-    toast({ title: 'Back in your own zoo' });
-    done();
-  });
-}
-
 
 /* --------------------------------------------------------------- cards -- */
 

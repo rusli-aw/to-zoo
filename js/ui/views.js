@@ -16,9 +16,11 @@ import { subscribe } from '../store.js';
 import { renderTasksView } from './tasksView.js';
 import { renderCustomizeView } from './customizeView.js';
 import { renderFriendsView } from './friendsView.js';
+import { renderZoosView } from './zoosView.js';
 import { renderProfileView } from './profileView.js';
 
 const RENDERERS = {
+  zoos: renderZoosView,
   tasks: renderTasksView,
   customize: renderCustomizeView,
   friends: renderFriendsView,
@@ -26,6 +28,7 @@ const RENDERERS = {
 };
 
 const TITLES = {
+  zoos: 'Zoos',
   tasks: 'Tasks',
   customize: 'Customize',
   friends: 'Friends',

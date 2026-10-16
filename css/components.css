@@ -1559,3 +1559,90 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 
 /* Text boxes: gently rounded, not pills. */
 textarea.field__input { border-radius: var(--radius-sm) !important; resize: vertical; }
+
+/* ═══════════════════════════════════════════════════ zoos ══
+   One list of every zoo you can stand in: your own, then each
+   shared one. The open zoo is marked rather than hidden, so the
+   list always answers "where am I" as well as "where could I go". */
+
+.zoos__lede {
+  margin: 0 0 var(--sp-4);
+  color: var(--ink-muted);
+  font-size: var(--step--1);
+}
+
+.zoo-list { list-style: none; margin: 0 0 var(--sp-5); padding: 0; display: grid; gap: var(--sp-3); }
+
+.zoo-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.zoo-card.is-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 60%, var(--surface));
+}
+
+.zoo-card__mark {
+  width: 40px; height: 40px;
+  flex: none;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-muted);
+  overflow: hidden;
+}
+.zoo-card__mark .ic { width: 20px; height: 20px; }
+
+.zoo-card__body { flex: 1; min-width: 0; }
+.zoo-card__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--step-0);
+  overflow-wrap: anywhere;
+}
+.zoo-card__meta { margin: 2px 0 0; color: var(--ink-muted); font-size: var(--step--1); }
+
+.zoo-card__people {
+  list-style: none;
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: var(--step--2);
+  color: var(--ink-muted);
+}
+.zoo-card__people li { display: flex; align-items: center; gap: 4px; }
+.zoo-card__avatar { width: 18px; height: 18px; display: inline-grid; place-items: center; border-radius: 50%; overflow: hidden; }
+.zoo-card__avatar svg, .zoo-card__mark svg { width: 100%; height: 100%; }
+
+.zoo-card__actions { display: flex; align-items: center; gap: var(--sp-2); flex: none; }
+
+/* Square-ish secondary buttons on a card: no spin, they are not dismissals. */
+.icon-btn--sm { width: 32px; height: 32px; font-size: 15px; }
+.icon-btn--sm:hover { transform: none; }
+
+.tag--on { background: var(--accent); color: var(--on-accent); }
+
+.zoos__empty {
+  margin: calc(var(--sp-5) * -1 + var(--sp-1)) 0 var(--sp-5);
+  color: var(--ink-faint);
+  font-size: var(--step--1);
+}
+
+.zoo-new__title {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--step-0);
+}
+.zoo-new .group-zoo__row { margin-bottom: var(--sp-4); }
+
+@media (max-width: 560px) {
+  .zoo-card { flex-wrap: wrap; }
+  .zoo-card__actions { width: 100%; justify-content: flex-end; }
+}
