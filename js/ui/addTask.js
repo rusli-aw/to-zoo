@@ -17,6 +17,7 @@ import { addTask as storeAddTask, updateTask as storeUpdateTask } from '../store
 import { stripDatePhrase, suggestAnimal, toDateInput } from '../suggest.js';
 import { openDialog } from './dialog.js';
 import { glyph } from './icons.js';
+import { portraitOf } from '../zoo/portraits.js';
 
 const QUICK_DATES = [
   { id: 'today', label: 'Today', days: 0 },
@@ -40,10 +41,10 @@ export function openAddTask(opts = {}) {
     return `
       <button class="animal-card" type="button" role="radio" aria-checked="false"
               data-animal="${type}">
-        <span class="animal-card__emoji" aria-hidden="true">${glyph(spec.emoji)}</span>
+        <span class="animal-card__pic" aria-hidden="true">${
+          portraitOf(type) ? `<img src="${portraitOf(type)}" alt="">` : glyph(spec.emoji)}</span>
         <span class="animal-card__label">${spec.label}</span>
         <span class="animal-card__size">${spec.sizeWord}</span>
-        <span class="animal-card__tag">${spec.tagline}</span>
       </button>`;
   }).join('');
 
@@ -73,16 +74,16 @@ export function openAddTask(opts = {}) {
           <div class="animal-choice" role="radiogroup" aria-label="Task size">${animalCards}</div>
         </fieldset>
 
-        <div class="field-row">
-          <label class="field">
-            <span class="field__label">Deadline</span>
-            <input class="field__input" id="add-date" name="dueDate" type="date">
-          </label>
-          <div class="field">
-            <span class="field__label">Quick pick</span>
-            <div class="chips">${dateChips}</div>
+        <fieldset class="field">
+          <legend class="field__label">When is it due?</legend>
+          <div class="due-row">
+            ${dateChips}
+            <label class="due-date">
+              <span class="visually-hidden">Pick a date</span>
+              <input class="field__input" id="add-date" name="dueDate" type="date">
+            </label>
           </div>
-        </div>
+        </fieldset>
 
         <details class="more">
           <summary>Notes and reminder</summary>

@@ -1457,3 +1457,74 @@ textarea.field__input { resize: vertical; min-height: 72px; }
 .modal--postcard .modal__panel { border: 0 !important; box-shadow: none !important; outline: 0; }
 .pc:focus { outline: none; }
 .pc:focus-visible .pc__face { outline: 3px solid var(--focus); outline-offset: 4px; }
+
+/* ═══════════════════════════════════════════════ add a task ══
+   One column, one rhythm: every row is the same width, the three animal
+   cards are identical boxes with their 3D portrait, and the due row is
+   five equal pills. */
+
+.modal--add .modal__panel { width: min(94vw, 560px); }
+.modal--add #add-form { display: grid; gap: var(--sp-5); }
+.modal--add .field { margin: 0; border: 0; padding: 0; min-width: 0; }
+.modal--add .field__label { display: block; margin-bottom: var(--sp-2); padding: 0; }
+.modal--add .field__input--lead { font-size: var(--step-1); padding: var(--sp-3) var(--sp-5); }
+.modal--add .suggestion { margin: calc(-1 * var(--sp-3)) 0 0; }
+
+.modal--add .animal-choice {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.modal--add .animal-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-2) var(--sp-3);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transform: none;
+  transition: border-color var(--dur-fast) var(--ease-soft), background-color var(--dur-fast) var(--ease-soft);
+}
+.modal--add .animal-card:hover { transform: none; border-color: var(--ink-muted); }
+.modal--add .animal-card__pic {
+  width: 100%;
+  aspect-ratio: 1;
+  margin-bottom: var(--sp-2);
+  border-radius: calc(var(--radius) - 6px);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  background: var(--surface-2);
+}
+.modal--add .animal-card__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.modal--add .animal-card__label { font-size: var(--step-0); font-weight: 700; }
+.modal--add .animal-card__size { font-size: var(--step--1); color: var(--ink-muted); letter-spacing: 0; }
+.modal--add .animal-card.is-on { background: var(--action); border-color: var(--ink); }
+.modal--add .animal-card.is-on .animal-card__size { color: var(--ink); }
+.modal--add .animal-card.is-on .animal-card__pic { box-shadow: inset 0 0 0 2px var(--ink); }
+
+.due-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+.due-date { grid-column: 1 / -1; }
+.due-row .chip { width: 100%; padding: var(--sp-2) 0; text-align: center; white-space: nowrap; }
+.due-date .field__input { width: 100%; height: 100%; padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-pill); }
+
+.modal--add .more summary { cursor: pointer; color: var(--ink-muted); font-weight: 600; }
+.modal--add .dialog-actions { margin-top: 0; justify-content: space-between; align-items: center; }
+
+@media (max-width: 560px) {
+  .due-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .due-date { grid-column: 1 / -1; }
+  .modal--add .dialog-hint { display: none; }
+  .modal--add .dialog-actions .btn { width: 100%; }
+}
+.modal--add .suggestion[hidden] { display: none; }
+.modal--add .modal__head { padding-bottom: var(--sp-4); }
+.due-row .chip { font-size: var(--step--1); }
+@media (max-width: 560px) { .due-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
