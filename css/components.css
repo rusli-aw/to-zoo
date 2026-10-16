@@ -1711,6 +1711,12 @@ textarea.field__input { border-radius: var(--radius-sm) !important; resize: vert
 .tour__actions { display: flex; gap: var(--sp-2); }
 .tour__actions .btn { white-space: nowrap; }
 
+/* A sheet opened by the tour ends above the tour panel rather than behind
+   it. --tour-h is the measured panel height, written by ui/onboarding.js. */
+body[data-tour="open"] .sheet-root {
+  padding-bottom: calc(var(--tour-h, 200px) + var(--sp-4));
+}
+
 /* While the tour runs, the HUD would only compete with it. */
 body[data-tour="open"] :is(.hud--bl, .hud--br, .nav) {
   opacity: 0;

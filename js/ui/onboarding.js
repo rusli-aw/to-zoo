@@ -278,6 +278,21 @@ export function runOnboarding({ zoo, environment, population, views, onFinish })
   document.getElementById('modal-root').appendChild(wrap);
   document.body.dataset.tour = 'open';
 
+  /**
+   * Publish the panel's height so an open sheet can end above it. The copy
+   * changes length step to step, so this is measured rather than guessed.
+   */
+  const panelEl = wrap.querySelector('.tour__panel');
+  const measurePanel = () => {
+    const h = Math.ceil(panelEl.getBoundingClientRect().height)
+      + (window.innerHeight > 640 ? 40 : 24);
+    document.documentElement.style.setProperty('--tour-h', `${h}px`);
+  };
+  const panelWatch = 'ResizeObserver' in window ? new ResizeObserver(measurePanel) : null;
+  panelWatch?.observe(panelEl);
+  window.addEventListener('resize', measurePanel, { passive: true });
+  measurePanel();
+
   const titleEl = wrap.querySelector('.tour__title');
   const bodyEl = wrap.querySelector('.tour__body');
   const dotsEl = wrap.querySelector('.tour__dots');
@@ -300,6 +315,7 @@ export function runOnboarding({ zoo, environment, population, views, onFinish })
     skipButton.textContent = last ? 'Start with a demo zoo' : 'Skip';
     wrap.dataset.step = step.key;
     BEATS[step.key]?.();
+    measurePanel();
     titleEl.focus({ preventScroll: true });
   }
 
@@ -312,6 +328,9 @@ export function runOnboarding({ zoo, environment, population, views, onFinish })
       animal.dispose();
     }
     for (const root of hidden) root.visible = true;
+    panelWatch?.disconnect();
+    window.removeEventListener('resize', measurePanel);
+    document.documentElement.style.removeProperty('--tour-h');
     environment?.openGate(0);
     if (openedSheet) views?.show('zoo');
     home(0.9);
