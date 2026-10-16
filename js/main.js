@@ -31,7 +31,7 @@ import { refresh as refreshPalette } from './zoo/palette.js';
 import {
   getState, subscribe, onError, mood as zooMoodOf, setSetting,
   taskById, completeTask, uncompleteTask, setUser, finishOnboarding, loadDemo,
-  shopItems, settleUpkeep, placedItems, updateTask, moveItem,
+  shopItems, settleUpkeep, placedItems, updateTask, moveItem, openTasks,
 } from './store.js';
 import { ANIMALS, mood as moodOfTask } from './model.js';
 
@@ -45,6 +45,7 @@ import { openPostcard } from './ui/postcard.js';
 import { ensureName, finishGoogleSignIn } from './ui/identity.js';
 import { isDialogOpen } from './ui/dialog.js';
 import { mountViews } from './ui/views.js';
+import { runOnboarding } from './ui/onboarding.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -86,8 +87,6 @@ function failGracefully(message, detail) {
   console.error('[to-zoo]', message, detail ?? '');
   // Tell the watchdog we got far enough to explain ourselves.
   window.__toZooBooted = true;
-  const loader = $('loader');
-  if (loader) { loader.dataset.done = ''; loader.hidden = true; }
   $('app')?.removeAttribute('hidden');
   const root = $('modal-root');
   if (root) {
@@ -566,6 +565,22 @@ async function boot() {
     toast({ title: `+${amount.toLocaleString()} test tokens`, note: 'Go wild in Customize.' });
   }
 
+  /**
+   * The tutorial. Runs itself on a first visit and on demand from Profile,
+   * so the explanation is never a one-time thing you can miss by tapping
+   * through it too fast.
+   */
+  function startTutorial() {
+    runOnboarding({
+      onFinish({ demo }) {
+        finishOnboarding();
+        if (demo) loadDemo();
+        syncWorld();
+        if (!demo && !openTasks(getState()).length) addTask();
+      },
+    });
+  }
+
   /** Opened from an invite link: offer to join. */
   async function joinFromUrl() {
     const params = new URLSearchParams(location.search);
@@ -593,7 +608,7 @@ async function boot() {
   }
 
   const views = mountViews({
-    zoo, population, picking, hud, group,
+    zoo, population, picking, hud, group, startTutorial,
     onAddTask: addTask,
     onOpenTask: openTask,
     onComplete: completeAndRelease,
@@ -683,14 +698,9 @@ async function boot() {
     if (revealed) return;
     revealed = true;
 
-    // Dismiss the loader first and unconditionally. Anything below can throw;
-    // none of it is allowed to leave the user staring at a spinner, which is
-    // the one failure mode with no way out from the user's side.
-    const loader = $('loader');
-    if (loader) {
-      loader.dataset.done = '';
-      setTimeout(() => { loader.hidden = true; }, 420);
-    }
+    // Show the app first and unconditionally. Anything below can throw, and
+    // none of it is allowed to leave the user staring at a blank page, which
+    // is the one failure mode with no way out from the user's side.
     $('app').hidden = false;
     window.__toZooBooted = true;
 
@@ -700,9 +710,14 @@ async function boot() {
       console.error('[to-zoo] could not size the stage', err);
     }
 
-    // First visit: straight into an empty zoo. The Add task button is the
-    // only thing to do, so it explains itself.
-    if (!getState().onboarded) finishOnboarding();
+    // First visit: the four-screen tutorial, which hands over to either the
+    // demo zoo or the add-task form rather than congratulating itself.
+    if (!getState().onboarded) {
+      startTutorial();
+      joinFromUrl();
+      grantTestCoins();
+      return;
+    }
     joinFromUrl();
     grantTestCoins();
 

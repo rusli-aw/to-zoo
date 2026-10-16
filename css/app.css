@@ -55,51 +55,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   white-space: nowrap;
 }
 
-/* ══════════════════════════════════════════════ loading ══ */
-
-.loader {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: var(--sp-2);
-  background: var(--paper);
-  color: var(--ink);
-  transition: opacity var(--dur-slow) var(--ease-soft);
-}
-.loader[data-done] { opacity: 0; pointer-events: none; }
-
-.loader__art { width: min(46vw, 260px); color: var(--ink); }
-.loader__art svg { width: 100%; height: auto; display: block; }
-
-/* Each stroke draws itself, in the order a person would draw it. */
-.sketch {
-  stroke-dasharray: 300;
-  stroke-dashoffset: 300;
-  animation: draw 1.15s var(--ease-soft) forwards;
-  animation-delay: calc(var(--i) * 90ms);
-}
-@keyframes draw { to { stroke-dashoffset: 0; } }
-
-@media (prefers-reduced-motion: reduce) {
-  .sketch { animation: none; stroke-dashoffset: 0; }
-}
-
-.loader__word {
-  font-family: var(--font-display);
-  font-variation-settings: normal;
-  font-size: var(--step-3);
-  font-weight: 600;
-  margin: var(--sp-4) 0 0;
-}
-.loader__sub {
-  margin: 0;
-  color: var(--ink-muted);
-  font-size: var(--step--1);
-}
-
 .fallback { padding: var(--sp-6); font-family: var(--font-body); }
 
 /* ══════════════════════════════════════════════════ app ══ */

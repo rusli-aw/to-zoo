@@ -181,6 +181,13 @@ export function renderProfileView(root, ctx) {
       </div>
 
       <div class="setting">
+        <div><b>How it works</b><span>The four-screen tour of the rescue.</span></div>
+        <div class="setting__actions">
+          <button class="btn btn--quiet btn--sm" type="button" data-tutorial>Restart tutorial</button>
+        </div>
+      </div>
+
+      <div class="setting">
         <div><b>Your zoo</b><span>Tasks live on this device only.</span></div>
         <div class="setting__actions">
           ${state.tasks.length === 0
@@ -202,6 +209,11 @@ export function renderProfileView(root, ctx) {
   root.querySelector('[data-avatar]').addEventListener('click', () => {
     const i = AVATARS.indexOf(state.user.avatar);
     setUser({ avatar: AVATARS[(i + 1) % AVATARS.length] });
+  });
+
+  root.querySelector('[data-tutorial]')?.addEventListener('click', () => {
+    ctx.views.show('zoo');
+    ctx.startTutorial?.();
   });
 
   for (const button of root.querySelectorAll('[data-theme-opt]')) {
